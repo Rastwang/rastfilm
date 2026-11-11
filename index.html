@@ -1,169 +1,581 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rast Film — Ancient Persian Stories for the Modern World</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --gold: #c9a961; --gold-light: #e8d5a3; --deep: #0d1117; --dark: #161b22; --text: #e6edf3; --muted: #8b949e; --accent: #b08d57; }
-        body { font-family: Georgia, 'Times New Roman', serif; background: var(--deep); color: var(--text); line-height: 1.7; }
-        a { color: var(--gold); text-decoration: none; }
-        a:hover { color: var(--gold-light); }
-        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; background: radial-gradient(ellipse at center, rgba(201,169,97,0.08) 0%, transparent 70%); }
-        .brand { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 400; letter-spacing: 0.15em; color: var(--gold); margin-bottom: 0.5rem; }
-        .tagline { font-size: clamp(1rem, 2.5vw, 1.4rem); color: var(--muted); font-style: italic; margin-bottom: 2rem; }
-        .creed { font-size: 1.1rem; color: var(--accent); letter-spacing: 0.2em; margin-bottom: 3rem; }
-        .hero-desc { max-width: 600px; font-size: 1.05rem; color: var(--muted); margin-bottom: 2.5rem; }
-        .btn-group { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-        .btn { display: inline-block; padding: 0.8rem 2rem; border: 1px solid var(--gold); color: var(--gold); font-size: 0.95rem; letter-spacing: 0.1em; transition: all 0.3s; }
-        .btn:hover { background: var(--gold); color: var(--deep); }
-        .btn-primary { background: var(--gold); color: var(--deep); }
-        .btn-primary:hover { background: var(--gold-light); }
-        section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; }
-        .section-title { font-size: 1.8rem; color: var(--gold); margin-bottom: 0.5rem; letter-spacing: 0.08em; }
-        .section-sub { color: var(--muted); margin-bottom: 2.5rem; font-style: italic; }
-        .divider { width: 60px; height: 1px; background: var(--gold); margin: 3rem auto; opacity: 0.5; }
-        .about-text { font-size: 1.05rem; color: var(--text); margin-bottom: 1.5rem; }
-        .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 2rem; }
-        .project-card { background: var(--dark); border: 1px solid rgba(201,169,97,0.15); padding: 2rem; transition: border-color 0.3s; }
-        .project-card:hover { border-color: var(--gold); }
-        .project-card h3 { color: var(--gold); font-size: 1.3rem; margin-bottom: 0.5rem; }
-        .project-card .persian { font-size: 0.9rem; color: var(--accent); margin-bottom: 1rem; direction: rtl; }
-        .project-card p { color: var(--muted); font-size: 0.95rem; }
-        .project-card .status { display: inline-block; margin-top: 1rem; padding: 0.2rem 0.8rem; font-size: 0.75rem; letter-spacing: 0.1em; border: 1px solid var(--accent); color: var(--accent); }
-        .culture-pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
-        .pillar { text-align: center; padding: 2rem 1rem; }
-        .pillar-symbol { font-size: 2rem; color: var(--gold); margin-bottom: 0.8rem; }
-        .pillar-name { font-size: 1.1rem; color: var(--gold); margin-bottom: 0.3rem; letter-spacing: 0.1em; }
-        .pillar-meaning { color: var(--muted); font-size: 0.9rem; }
-        .pillar-avestan { color: var(--accent); font-size: 0.85rem; margin-top: 0.3rem; font-style: italic; }
-        .contact-links { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
-        .contact-item { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.5rem; background: var(--dark); border: 1px solid rgba(201,169,97,0.1); }
-        .contact-item:hover { border-color: var(--gold); }
-        .contact-label { color: var(--muted); font-size: 0.85rem; letter-spacing: 0.1em; min-width: 100px; }
-        .contact-value { color: var(--text); }
-        footer { text-align: center; padding: 3rem 2rem; color: var(--muted); font-size: 0.85rem; border-top: 1px solid rgba(201,169,97,0.1); }
-        .footer-creed { color: var(--accent); letter-spacing: 0.15em; margin-bottom: 0.8rem; font-size: 0.9rem; }
-        @media (max-width: 600px) { .culture-pillars { grid-template-columns: 1fr; } section { padding: 3rem 1.5rem; } }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#120c07">
+<title>آب‌پاشی تیرگان · Tirgan Splash</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='38' fill='%23ffd89a'/><circle cx='42' cy='42' r='12' fill='%23fff3d6'/></svg>">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:#0a0705}
+  body{
+    touch-action:none;
+    -webkit-user-select:none;user-select:none;
+    font-family:"Vazirmatn","Tahoma","Helvetica Neue",Arial,sans-serif;
+    cursor:crosshair;
+  }
+
+  /* ---------- 背景 ---------- */
+  .bg-blur{
+    position:absolute;inset:-12%;z-index:0;
+    background:url(assets/tower.jpg) center/cover no-repeat;
+    filter:blur(46px) brightness(.30) saturate(.75);
+  }
+  .bg-main{
+    position:absolute;inset:0;z-index:1;
+    background:url(assets/tower.jpg) center 38%/cover no-repeat;
+    animation:drift 46s ease-in-out infinite alternate;
+    will-change:transform;
+  }
+  @keyframes drift{
+    from{transform:scale(1.00) translateY(0)}
+    to  {transform:scale(1.055) translateY(-1.2%)}
+  }
+  /* 压暗：上下渐变，让文字和人物浮出来 */
+  .vignette{
+    position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:
+      linear-gradient(to bottom,rgba(8,5,3,.72) 0%,rgba(8,5,3,.10) 22%,rgba(8,5,3,0) 42%,rgba(8,5,3,.12) 72%,rgba(8,5,3,.78) 100%),
+      radial-gradient(ellipse at 50% 62%,rgba(255,180,90,.10) 0%,rgba(0,0,0,0) 58%);
+  }
+
+  /* ---------- 人物 ---------- */
+  .char-box{
+    position:absolute;z-index:4;
+    transform-origin:50% 100%;
+    will-change:transform;
+    pointer-events:none;
+    display:flex;flex-direction:column;align-items:center;
+  }
+  #boyBox {left:2%;  bottom:5%;  height:40vh}
+  #girlBox{right:5%; bottom:13%; height:28vh; z-index:3; opacity:.97}
+
+  .char{
+    height:100%;width:auto;display:block;
+    filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));
+  }
+  .gshadow{
+    position:absolute;left:50%;bottom:-1.5%;
+    width:74%;height:7%;
+    transform:translateX(-50%);
+    background:radial-gradient(ellipse at 50% 50%,rgba(0,0,0,.62) 0%,rgba(0,0,0,.34) 42%,rgba(0,0,0,0) 74%);
+    filter:blur(3px);
+  }
+
+  /* 湿地：底部一层水光 */
+  .wet{
+    position:absolute;left:0;right:0;bottom:0;height:24%;z-index:2;
+    pointer-events:none;
+    background:
+      radial-gradient(ellipse 70% 40% at 50% 100%,rgba(170,215,235,.20) 0%,rgba(170,215,235,0) 72%),
+      linear-gradient(to top,rgba(120,170,200,.13) 0%,rgba(120,170,190,0) 60%);
+    -webkit-mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.65) 46%,transparent 100%);
+            mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.65) 46%,transparent 100%);
+  }
+
+  .char-box.hit{animation:hit .34s cubic-bezier(.3,1.4,.5,1)}
+  @keyframes hit{
+    0%  {transform:translateY(0) scale(1,1)}
+    28% {transform:translateY(9px) scale(.955,1.045)}
+    58% {transform:translateY(-4px) scale(1.03,.97)}
+    100%{transform:translateY(0) scale(1,1)}
+  }
+
+  /* ---------- 金线（箭） ---------- */
+  .line-wrap{
+    position:absolute;z-index:5;left:0;right:0;top:26%;
+    height:120px;pointer-events:none;transform:rotate(-17deg);
+  }
+  .line{
+    position:absolute;left:0;top:50%;height:2px;width:46%;
+    background:linear-gradient(90deg,rgba(255,210,122,0),#ffd27a 35%,#fff8e2 50%,#ffd27a 65%,rgba(255,210,122,0));
+    filter:blur(.5px) drop-shadow(0 0 7px rgba(255,205,120,.95));
+    opacity:0;
+  }
+  .line.go{animation:fly 1.9s cubic-bezier(.4,0,.6,1)}
+  @keyframes fly{
+    0%  {opacity:0;transform:translateX(-90%) scaleX(.35)}
+    12% {opacity:1}
+    80% {opacity:1}
+    100%{opacity:0;transform:translateX(240%) scaleX(1.15)}
+  }
+
+  /* ---------- HUD ---------- */
+  .hud{
+    position:absolute;z-index:8;left:0;right:0;
+    top:calc(env(safe-area-inset-top,0px) + 18px);
+    text-align:center;pointer-events:none;
+    color:#f3e8d2;
+    text-shadow:0 2px 14px rgba(0,0,0,.9);
+  }
+  .hud .fa{font-size:15px;letter-spacing:.5px;opacity:.95}
+  .hud .num{
+    display:inline-block;min-width:2ch;
+    font-weight:700;color:#ffd89a;
+    font-variant-numeric:tabular-nums;
+  }
+  .hud .en{
+    margin-top:6px;font-size:10px;letter-spacing:2.4px;
+    text-transform:uppercase;opacity:.5;
+  }
+
+  .hint{
+    position:absolute;z-index:8;left:0;right:0;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 26px);
+    text-align:center;pointer-events:none;
+    color:#f3e8d2;font-size:14px;letter-spacing:.5px;
+    text-shadow:0 2px 12px rgba(0,0,0,.9);
+    opacity:.85;transition:opacity .8s;
+  }
+  .hint b{color:#ffd89a;font-weight:600}
+  .hint.gone{opacity:0}
+
+  /* ---------- 画布 ---------- */
+  #fx{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:6;pointer-events:none}
+
+  /* ---------- 启动遮罩（解锁音频） ---------- */
+  #gate{
+    position:absolute;inset:0;z-index:20;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(8,5,3,.86);backdrop-filter:blur(6px);
+    color:#f3e8d2;text-align:center;padding:0 28px;
+    transition:opacity .7s;cursor:pointer;
+  }
+  #gate.hide{opacity:0;pointer-events:none}
+  #gate .big{font-size:22px;color:#ffd89a;margin-bottom:10px;letter-spacing:1px}
+  #gate .sub{font-size:12px;opacity:.6;letter-spacing:2px;text-transform:uppercase;margin-top:14px}
+  #gate .dot{
+    width:14px;height:14px;border-radius:50%;background:#ffd89a;margin-top:26px;
+    animation:pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.7);opacity:1}}
+
+  /* ---------- 横屏 / 桌面 ---------- */
+  @media (min-aspect-ratio: 1/1){
+    .bg-main{
+      background-size:contain;
+      background-position:center 42%;
+      background-repeat:no-repeat;
+    }
+    #boyBox {left:9%;  bottom:4%;  height:66vh}
+    #girlBox{right:9%; bottom:11%; height:47vh}
+    .hud{top:calc(env(safe-area-inset-top,0px) + 22px)}
+    .hud .fa{font-size:17px}
+    .hint{bottom:calc(env(safe-area-inset-bottom,0px) + 30px)}
+    .line-wrap{top:22%}
+  }
+  @media (min-aspect-ratio: 1/1) and (max-height: 560px){
+    #boyBox {height:72vh; left:14%}
+    #girlBox{height:52vh; right:14%}
+  }
+</style>
 </head>
 <body>
-	<!-- Hero -->
-<div class="hero">
-    <div class="hero-content">
-        <div class="brand">RAST FILM</div>
-        <div class="tagline">Ancient Persian Stories for the Modern World</div>
-        <div class="creed">Humata · Hukhta · Huvarshta</div>
-        <p class="hero-desc">
-            Cinematic stories rooted in the wisdom of pre-Islamic Persia —
-            from the sacred fire of the Kara Workshop to the eternal dance of light and shadow.
-        </p>
-        <div class="btn-group">
-            <a href="#projects" class="btn btn-primary">Our Films</a>
-            <a href="#contact" class="btn">Get in Touch</a>
-        </div>
-    </div>
+
+<div class="bg-blur"></div>
+<div class="bg-main"></div>
+<div class="vignette"></div>
+<div class="wet"></div>
+
+<div class="line-wrap"><div class="line" id="line"></div></div>
+
+<div class="char-box" id="girlBox"><i class="gshadow"></i><img class="char" id="girl" src="assets/girl.png" alt=""></div>
+<div class="char-box" id="boyBox"><i class="gshadow"></i><img class="char" id="boy"  src="assets/boy.png"  alt=""></div>
+
+<canvas id="fx"></canvas>
+
+<div class="hud">
+  <div class="fa">امروز <span class="num" id="cnt">۱۲٬۸۴۷</span> نفر آب پاشیدند</div>
+  <div class="en">Tirgan Splash · Rast Film</div>
 </div>
-	<!-- About -->
-<section id="about">
-    <h2 class="section-title">About Rast Film</h2>
-    <p class="section-sub">Where ancient wisdom meets the silver screen</p>
-    <p class="about-text">
-        Rast Film is an independent studio dedicated to bringing the timeless stories of ancient Persian civilization to life through cinema. Our name, <em>Rast</em>, means "truth" and "justice" in Persian — values at the heart of every story we tell.
-    </p>
-    <p class="about-text">
-        From the Zoroastrian fire temples to the legendary workshops of Jamshid, from the epic battles of Rostam to the quiet wisdom of the Avesta — we craft films that bridge millennia, inviting audiences worldwide to experience the depth and beauty of a civilization that shaped human history.
-    </p>
-    <p class="about-text">
-        Every frame is a dialogue between past and present. Every story is a bridge across cultures.
-    </p>
-    <div class="divider"></div>
-</section>
 
-<!-- Projects -->
-<section id="projects">
-    <h2 class="section-title">Our Films</h2>
-    <p class="section-sub">Stories from the eternal flame</p>
-    <div class="projects-grid">
-        <div class="project-card">
-            <h3>The Kara Workshop</h3>
-            <div class="persian">کارگاه کارا</div>
-            <p>
-                A short film set in ancient Persia, following artisans whose craft is guided by the sacred principle of <em>Arta</em> — truth and order. When fire threatens their workshop, their unity becomes their greatest creation.
-            </p>
-            <span class="status">In Post-Production</span>
-        </div>
-        <div class="project-card">
-            <h3>The Fire Keeper</h3>
-            <div class="persian">نگهبان آتش</div>
-            <p>
-                The saga of a lone keeper tending the sacred flame through centuries of empire and upheaval — a meditation on duty, sacrifice, and the light that outlasts all darkness.
-            </p>
-            <span class="status">In Development</span>
-        </div>
-        <div class="project-card">
-            <h3>Winged Serpent</h3>
-            <div class="persian">اژدهای بالدار</div>
-            <p>
-                An epic tale inspired by the Shahnameh, where myth and history intertwine — the story of a serpent that guards the boundary between the mortal world and the realm of gods.
-            </p>
-            <span class="status">In Development</span>
-        </div>
-    </div>
-    <div class="divider"></div>
-</section>
+<div class="hint" id="hint"><b>با انگشت بکش</b> — 用手指划过屏幕</div>
 
-<!-- Culture -->
-<section id="culture">
-    <h2 class="section-title">The Three Pillars</h2>
-    <p class="section-sub">The Zoroastrian creed that guides our craft</p>
-    <div class="culture-pillars">
-        <div class="pillar">
-            <div class="pillar-symbol">✦</div>
-            <div class="pillar-name">Good Thoughts</div>
-            <div class="pillar-meaning">Humata</div>
-            <div class="pillar-avestan">The foundation of all creation</div>
-        </div>
-        <div class="pillar">
-            <div class="pillar-symbol">✦</div>
-            <div class="pillar-name">Good Words</div>
-            <div class="pillar-meaning">Hukhta</div>
-            <div class="pillar-avestan">The bridge between souls</div>
-        </div>
-        <div class="pillar">
-            <div class="pillar-symbol">✦</div>
-            <div class="pilla
-				<!-- Contact -->
-<section id="contact">
-    <h2 class="section-title">Connect</h2>
-    <p class="section-sub">Join us on this journey through time</p>
-    <div class="contact-links">
-        <div class="contact-item">
-            <span class="contact-label">EMAIL</span>
-            <span class="contact-value">rastfilm@outlook.com</span>
-        </div>
-        <div class="contact-item">
-            <span class="contact-label">YOUTUBE</span>
-            <span class="contact-value"><a href="https://youtube.com/@RastFilm" target="_blank">youtube.com/@RastFilm</a></span>
-        </div>
-        <div class="contact-item">
-            <span class="contact-label">INSTAGRAM</span>
-            <span class="contact-value"><a href="https://instagram.com/RastFilm" target="_blank">instagram.com/RastFilm</a></span>
-        </div>
-        <div class="contact-item">
-            <span class="contact-label">VIMEO</span>
-            <span class="contact-value"><a href="https://vimeo.com/RastFilm" target="_blank">vimeo.com/RastFilm</a></span>
-        </div>
-    </div>
-</section>
+<div id="gate">
+  <div class="big">آب‌پاشی</div>
+  <div style="font-size:13px;opacity:.75;line-height:1.9">
+    تیرگان مبارک<br>
+    <span style="font-size:11px;opacity:.6">提尔甘节快乐</span>
+  </div>
+  <div class="dot"></div>
+  <div class="sub">Tap to begin</div>
+</div>
 
-<!-- Footer -->
-<footer>
-    <div class="footer-creed">Humata · Hukhta · Huvarshta</div>
-    <p>© 2026 Rast Film. All rights reserved.</p>
-    <p style="margin-top:0.5rem;">Crafted with reverence for the ancient wisdom of Persia.</p>
-</footer>
+<script>
+(function(){
+  'use strict';
 
+  /* ================= 画布 ================= */
+  const cv  = document.getElementById('fx');
+  const ctx = cv.getContext('2d');
+  let W = 0, H = 0, DPR = 1;
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth;
+    H = cv.clientHeight;
+    cv.width  = Math.round(W * DPR);
+    cv.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+
+  /* ================= 音效池 ================= */
+  const NAMES = ['ab_m','ab_f','bezan_m','bezan_f','ey_m','ey_f','tirgan_m','tirgan_f','laugh_a','laugh_b','laugh_c'];
+  const POOL = {};
+  NAMES.forEach(n => {
+    POOL[n] = [];
+    for (let i = 0; i < 3; i++){
+      const a = new Audio('assets/' + n + '.mp3');
+      a.preload = 'auto';
+      POOL[n].push(a);
+    }
+  });
+  const _idx = {};
+  function sfx(name, vol){
+    const arr = POOL[name];
+    if (!arr) return;
+    _idx[name] = ((_idx[name] || 0) + 1) % arr.length;
+    const a = arr[_idx[name]];
+    try{ a.currentTime = 0; a.volume = vol == null ? 1 : vol; a.play().catch(()=>{}); }catch(e){}
+  }
+  // 环境层：轻声群笑（随机间隔 + 随机语速，避免 3.5 秒短循环的重复感）
+  const amb = new Audio('assets/laugh_d.mp3');
+  amb.volume = 0.14; amb.preload = 'auto';
+  function ambOnce(){
+    if (!started || document.hidden){ scheduleAmb(); return; }
+    try{
+      amb.currentTime = 0;
+      amb.playbackRate = 0.92 + Math.random() * 0.18;
+      amb.play().catch(()=>{});
+    }catch(e){}
+    scheduleAmb();
+  }
+  function scheduleAmb(){ setTimeout(ambOnce, 9000 + Math.random() * 14000); }
+
+  /* ================= 粒子 ================= */
+  const drops = [];   // 空中的水珠
+  const beads = [];   // 贴在屏幕上的水珠
+  const trail = [];   // 划动的水痕
+
+  const MAX_DROPS = 460;
+  const MAX_BEADS = 120;
+
+  function spawnSplash(x, y, dirX, dirY, power){
+    const n = Math.round(14 + power * 30);
+    for (let i = 0; i < n && drops.length < MAX_DROPS; i++){
+      const spread = (Math.random() - 0.5) * 1.5;
+      const base = Math.atan2(dirY, dirX) + spread;
+      const sp = (1.4 + Math.random() * 3.2) * (0.55 + power);
+      drops.push({
+        x: x, y: y,
+        vx: Math.cos(base) * sp,
+        vy: Math.sin(base) * sp - (0.9 + Math.random() * 1.4),
+        r: 1.4 + Math.random() * 3.6,
+        life: 1,
+        decay: 0.010 + Math.random() * 0.020
+      });
+    }
+    // 少量水珠甩到"屏幕玻璃"上
+    const nb = Math.round(1 + power * 4);
+    for (let i = 0; i < nb && beads.length < MAX_BEADS; i++){
+      beads.push({
+        x: x + (Math.random()-0.5) * 140,
+        y: y + (Math.random()-0.5) * 140,
+        r: 2 + Math.random() * 5.5,
+        vy: 0,
+        slide: Math.random() < 0.30,
+        life: 1,
+        decay: 0.0025 + Math.random() * 0.004
+      });
+    }
+  }
+
+  function update(dt){
+    // 水珠
+    for (let i = drops.length - 1; i >= 0; i--){
+      const p = drops[i];
+      p.vy += 0.20;
+      p.vx *= 0.982;
+      p.vy *= 0.992;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+      if (p.life <= 0 || p.y > H + 40 || p.x < -60 || p.x > W + 60){
+        drops.splice(i, 1);
+      }
+    }
+    // 屏幕水珠
+    for (let i = beads.length - 1; i >= 0; i--){
+      const b = beads[i];
+      if (b.slide){
+        b.vy += 0.014;
+        b.y += b.vy;
+      }
+      b.life -= b.decay;
+      if (b.life <= 0 || b.y > H + 30) beads.splice(i, 1);
+    }
+    // 水痕
+    for (let i = trail.length - 1; i >= 0; i--){
+      trail[i].life -= 0.055;
+      if (trail[i].life <= 0) trail.splice(i, 1);
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+
+    // ---- 水痕（划动轨迹）----
+    ctx.lineCap = 'round';
+    for (const t of trail){
+      ctx.globalAlpha = t.life * 0.30;
+      ctx.strokeStyle = 'rgba(198,238,255,1)';
+      ctx.lineWidth = t.w * t.life;
+      ctx.beginPath();
+      ctx.moveTo(t.x1, t.y1);
+      ctx.lineTo(t.x2, t.y2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // ---- 屏幕水珠 ----
+    for (const b of beads){
+      const a = Math.max(0, Math.min(1, b.life));
+      // 下滑的拖痕
+      if (b.slide && b.vy > 0.25){
+        const len = Math.min(b.vy * 16, 90);
+        ctx.globalAlpha = a * 0.10;
+        ctx.fillStyle = 'rgba(205,240,255,1)';
+        ctx.fillRect(b.x - b.r * 0.36, b.y - len, b.r * 0.72, len);
+      }
+      ctx.globalAlpha = a * 0.26;
+      ctx.fillStyle = 'rgba(190,232,255,1)';
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.2832); ctx.fill();
+      // 高光
+      ctx.globalAlpha = a * 0.80;
+      ctx.fillStyle = 'rgba(255,255,255,1)';
+      ctx.beginPath(); ctx.arc(b.x - b.r*0.30, b.y - b.r*0.32, b.r*0.30, 0, 6.2832); ctx.fill();
+      // 边缘
+      ctx.globalAlpha = a * 0.20;
+      ctx.strokeStyle = 'rgba(255,255,255,1)';
+      ctx.lineWidth = 0.7;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r*0.94, 0, 6.2832); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // ---- 空中水珠 ----
+    for (const p of drops){
+      const a = Math.max(0, p.life);
+      // 拖尾
+      ctx.globalAlpha = a * 0.45;
+      ctx.strokeStyle = 'rgba(190,232,255,1)';
+      ctx.lineWidth = Math.max(0.6, p.r * 0.85);
+      ctx.beginPath();
+      ctx.moveTo(p.x - p.vx * 1.7, p.y - p.vy * 1.7);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      // 本体
+      ctx.globalAlpha = a * 0.92;
+      ctx.fillStyle = 'rgba(222,246,255,1)';
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832); ctx.fill();
+      // 亮点
+      ctx.globalAlpha = a * 0.55;
+      ctx.fillStyle = 'rgba(255,255,255,1)';
+      ctx.beginPath(); ctx.arc(p.x - p.r*0.3, p.y - p.r*0.3, p.r*0.4, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min(50, now - last);
+    last = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  /* ================= 计数 ================= */
+  const FA = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+  function faNum(n){
+    return String(n).replace(/\d/g, d => FA[+d]).replace(/\B(?=(\d{3})+(?!\d))/g, '٬');
+  }
+  const elCnt = document.getElementById('cnt');
+  let count = 12847;
+  try{
+    const saved = localStorage.getItem('tirgan_count');
+    if (saved) count = parseInt(saved, 10) || count;
+  }catch(e){}
+  elCnt.textContent = faNum(count);
+
+  let countDirty = false;
+  function bump(){
+    count++;
+    countDirty = true;
+    elCnt.textContent = faNum(count);
+  }
+  setInterval(() => {
+    if (countDirty){
+      try{ localStorage.setItem('tirgan_count', String(count)); }catch(e){}
+      countDirty = false;
+    }
+  }, 2000);
+
+  /* ================= 交互 ================= */
+  const boy  = document.getElementById('boy');
+  const girl = document.getElementById('girl');
+  const boyBox  = document.getElementById('boyBox');
+  const girlBox = document.getElementById('girlBox');
+  const BOX = {boy: boyBox, girl: girlBox};
+  const hint = document.getElementById('hint');
+  const lineEl = document.getElementById('line');
+
+  let drawing = false;
+  let px = 0, py = 0, pt = 0;
+  let lastSfx = 0, lastHitSfx = 0, started = false;
+
+  function hitTest(x, y){
+    for (const el of [boy, girl]){
+      const r = el.getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return el;
+    }
+    return null;
+  }
+
+  function onDown(x, y){
+    if (!started) start();
+    drawing = true;
+    px = x; py = y; pt = performance.now();
+    // 单点也泼一下
+    spawnSplash(x, y, (Math.random()-0.5), -1, 0.55);
+    bump();
+    const now = performance.now();
+    if (now - lastSfx > 150){
+      sfx(Math.random() < 0.5 ? 'ab_m' : 'ab_f', 0.85);
+      lastSfx = now;
+    }
+    const c = hitTest(x, y);
+    if (c) react(c);
+  }
+
+  function onMove(x, y){
+    if (!drawing) return;
+    const now = performance.now();
+    const dt = Math.max(8, now - pt);
+    const dx = x - px, dy = y - py;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 3) return;
+
+    const speed = dist / dt * 16;                 // 归一化速度
+    const power = Math.min(1.6, speed / 14 + 0.25);
+    const nx = dx / dist, ny = dy / dist;
+
+    // 水痕
+    trail.push({ x1: px, y1: py, x2: x, y2: y, w: 4 + power * 14, life: 1 });
+
+    // 水珠
+    spawnSplash(x, y, nx, ny, power);
+    bump();
+
+    // 音效节流
+    if (now - lastSfx > 165){
+      const r = Math.random();
+      if (r < 0.45)      sfx(Math.random() < 0.5 ? 'ab_m' : 'ab_f', 0.75);
+      else if (r < 0.85) sfx(Math.random() < 0.5 ? 'bezan_m' : 'bezan_f', 0.70);
+      else               sfx('laugh_c', 0.55);
+      lastSfx = now;
+    }
+
+    // 命中角色
+    const c = hitTest(x, y);
+    if (c) react(c);
+
+    px = x; py = y; pt = now;
+  }
+
+  function react(el){
+    const now = performance.now();
+    if (now - lastHitSfx < 520) return;
+    lastHitSfx = now;
+    el.classList.remove('hit');
+    void el.offsetWidth;
+    el.classList.add('hit');
+    setTimeout(() => el.classList.remove('hit'), 360);
+
+    const r = Math.random();
+    const v = (el.id === 'boy' ? 'm' : 'f');
+    if (r < 0.34)      sfx('ey_' + v, 0.95);
+    else if (r < 0.66) sfx('tirgan_' + v, 0.90);
+    else if (r < 0.88) sfx(Math.random() < 0.5 ? 'laugh_a' : 'laugh_b', 0.72);
+    else               sfx('laugh_c', 0.80);
+  }
+
+  function onUp(){ drawing = false; }
+
+  // 事件绑定
+  cv.style.pointerEvents = 'none';
+  document.addEventListener('pointerdown', e => {
+    if (e.target.closest('#gate')) return;
+    onDown(e.clientX, e.clientY);
+  }, {passive:true});
+  document.addEventListener('pointermove', e => {
+    onMove(e.clientX, e.clientY);
+  }, {passive:true});
+  document.addEventListener('pointerup', onUp, {passive:true});
+  document.addEventListener('pointercancel', onUp, {passive:true});
+
+  /* ================= 启动 ================= */
+  const gate = document.getElementById('gate');
+  function start(){
+    if (started) return;
+    started = true;
+    gate.classList.add('hide');
+    setTimeout(() => gate.remove(), 800);
+    // iOS 手势解锁：每个音频元素必须在用户手势内播过一次，之后才能正常出声
+    NAMES.forEach(n => POOL[n].forEach(a => {
+      try{ a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(()=>{}); }catch(e){}
+    }));
+    // 启动环境笑层
+    scheduleAmb();
+    // 提示 6 秒后淡出
+    setTimeout(() => hint.classList.add('gone'), 6000);
+  }
+  gate.addEventListener('pointerdown', e => { e.stopPropagation(); start(); });
+  gate.addEventListener('click', () => start());
+
+  /* ================= 金线 ================= */
+  function shoot(){
+    lineEl.classList.remove('go');
+    void lineEl.offsetWidth;
+    lineEl.classList.add('go');
+  }
+  function scheduleLine(){
+    const wait = 17000 + Math.random() * 13000;
+    setTimeout(() => { shoot(); scheduleLine(); }, wait);
+  }
+
+  /* ================= 起跑 ================= */
+  resize();
+  requestAnimationFrame(loop);
+  setTimeout(shoot, 9000);
+  scheduleLine();
+
+  // 人物入场
+  boyBox.style.transition  = 'transform 1.1s cubic-bezier(.2,.9,.3,1), opacity 1.1s';
+  girlBox.style.transition = 'transform 1.1s cubic-bezier(.2,.9,.3,1) .15s, opacity 1.1s .15s';
+  boyBox.style.transform   = 'translateY(26px)';
+  girlBox.style.transform  = 'translateY(26px)';
+  boyBox.style.opacity = '0';
+  girlBox.style.opacity = '0';
+  setTimeout(() => {
+    boyBox.style.transform  = 'translateY(0)';
+    girlBox.style.transform = 'translateY(0)';
+    boyBox.style.opacity = '1';
+    girlBox.style.opacity = '1';
+  }, 260);
+
+})();
+</script>
 </body>
 </html>
