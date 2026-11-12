@@ -4,7 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#120c07">
-<title>آب‌پاشی تیرگان · Tirgan Splash</title>
+<title>آب‌پاشی تیرگان · Tirgan Splash — a 3-minute water fight</title>
+<meta name="description" content="A 3-minute Tirgan water fight. Scoop, splash, and laugh your stress away. No lives, no ads, no fail — just splashing. By Rast Film.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tirgan Splash · Rast Film">
+<meta property="og:title" content="Tirgan Splash — a 3-minute water fight">
+<meta property="og:description" content="Scoop, splash, and laugh your stress away. A 3-minute Tirgan water festival game. No lives, no ads, no fail state.">
+<meta property="og:image" content="https://rastwang.github.io/rastfilm/tirgan/assets/tower.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tirgan Splash — a 3-minute water fight">
+<meta name="twitter:description" content="Scoop, splash, and laugh your stress away. A 3-minute Tirgan water festival game by Rast Film.">
+<meta name="twitter:image" content="https://rastwang.github.io/rastfilm/tirgan/assets/tower.jpg">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='38' fill='%23ffd89a'/><circle cx='42' cy='42' r='12' fill='%23fff3d6'/></svg>">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -394,6 +404,29 @@
   }
   .hud a.en:hover{opacity:.95;color:#ffd89a;text-shadow:0 0 12px rgba(255,216,154,.6)}
 
+  /* ---------- 顶部转化按钮：Patreon（金色胶囊，常驻） ---------- */
+  .topcta{
+    position:absolute;left:50%;transform:translateX(-50%);
+    top:calc(env(safe-area-inset-top,0px) + 62px);
+    z-index:65;display:inline-flex;align-items:center;gap:6px;
+    padding:8px 15px;border-radius:999px;white-space:nowrap;
+    font-size:10px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;
+    color:#3a1d05;text-decoration:none;cursor:pointer;
+    background:linear-gradient(180deg,#ffeec0 0%,#ffd479 42%,#eda93c 78%,#d08a22 100%);
+    border:1px solid rgba(255,246,214,.7);
+    box-shadow:0 3px 12px rgba(0,0,0,.55),0 0 18px rgba(255,190,80,.25),inset 0 1px 0 rgba(255,255,255,.65);
+    animation:ctaPulse 3.2s ease-in-out infinite;
+  }
+  .topcta .dot{width:5px;height:5px;border-radius:50%;background:#8a3b00;opacity:.75}
+  .topcta:active{transform:translateX(-50%) scale(.96)}
+  @keyframes ctaPulse{
+    0%,100%{box-shadow:0 3px 12px rgba(0,0,0,.55),0 0 14px rgba(255,190,80,.18),inset 0 1px 0 rgba(255,255,255,.65)}
+    50%    {box-shadow:0 3px 14px rgba(0,0,0,.55),0 0 26px rgba(255,200,95,.5),inset 0 1px 0 rgba(255,255,255,.8)}
+  }
+  @media (min-aspect-ratio: 1/1){
+    .topcta{top:calc(env(safe-area-inset-top,0px) + 50px);font-size:9px;padding:7px 13px}
+  }
+
   /* ---------- 节日问候（金色双语，彩旗下方；两条轮换显示） ---------- */
   .greet{
     position:absolute;left:0;right:0;z-index:8;
@@ -566,7 +599,8 @@
   }
   .r-title{font-size:13px;letter-spacing:3px;color:#ffd98f;opacity:.85}
   .r-score{font-size:46px;font-weight:900;color:#fff;margin:6px 0 2px}
-  .r-rank{font-size:15px;color:#ffe9a8;margin-bottom:16px}
+  .r-rank{font-size:15px;color:#ffe9a8;margin-bottom:6px}
+  .r-breath{font-size:12px;font-style:italic;color:#e8c98f;opacity:.8;margin-bottom:18px}
   .r-btns{display:flex;flex-direction:column;gap:10px}
   .r-btn{
     display:block;padding:12px 26px;border-radius:12px;font-weight:700;
@@ -574,9 +608,65 @@
   }
   .r-again{background:#ffd98f;color:#4a2408;cursor:pointer;border:none}
   .r-pat{background:rgba(255,217,143,.14);color:#ffd98f;border:1px solid rgba(255,214,140,.5)}
+
+  /* ---------- 入场：黑场缓慢亮起，像深呼吸一样进入 ---------- */
+  #fadein{
+    position:fixed;inset:0;z-index:200;background:#0a0705;
+    pointer-events:none;transition:opacity 1.7s ease;
+  }
+  #fadein.out{opacity:0}
+
+  /* ---------- 玩家标识：头顶 YOU 徽标 + 脚下金色光环（操控感的核心） ---------- */
+  #youTag{
+    position:absolute;z-index:12;left:0;top:0;pointer-events:none;
+    opacity:0;transition:opacity .5s;
+    transform:translate(-50%,-100%);
+  }
+  #youTag .pill{
+    display:inline-block;padding:3px 9px;border-radius:999px;
+    font-size:9px;font-weight:800;letter-spacing:1.6px;color:#3a1d05;
+    background:linear-gradient(180deg,#ffeec0,#f5bd52 70%,#d9922c);
+    border:1px solid rgba(255,246,214,.75);
+    box-shadow:0 2px 8px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.6);
+    animation:youBob 1.6s ease-in-out infinite;
+  }
+  #youTag .arr{
+    display:block;width:0;height:0;margin:0 auto;
+    border-left:5px solid transparent;border-right:5px solid transparent;
+    border-top:7px solid #f2b64a;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));
+  }
+  @keyframes youBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  #youRing{
+    position:absolute;z-index:9;left:0;top:0;pointer-events:none;
+    width:84px;height:26px;opacity:0;transition:opacity .5s;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:radial-gradient(ellipse at center,rgba(255,214,120,.42) 0%,rgba(255,214,120,.16) 52%,transparent 72%);
+    border:1.5px solid rgba(255,222,150,.55);
+    animation:ringPulse 1.9s ease-in-out infinite;
+  }
+  @keyframes ringPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.13)}}
+  body.you-on #youTag,body.you-on #youRing{opacity:1}
+
+  /* 点击落点涟漪：金色圆环扩散，确认"指令已收到" */
+  .tapmark{
+    position:absolute;z-index:12;left:0;top:0;width:30px;height:30px;
+    pointer-events:none;border-radius:50%;
+    border:2px solid rgba(255,222,150,.9);
+    box-shadow:0 0 12px rgba(255,200,100,.5),inset 0 0 8px rgba(255,200,100,.35);
+    transform:translate(-50%,-50%) scale(.35);
+    animation:tapRing .65s ease-out forwards;
+  }
+  @keyframes tapRing{
+    0%  {transform:translate(-50%,-50%) scale(.35);opacity:1}
+    100%{transform:translate(-50%,-50%) scale(1.7);opacity:0}
+  }
 </style>
 </head>
 <body>
+
+<div id="fadein"></div>
 
 <img class="bg-blur" src="assets/tower.jpg" alt="" aria-hidden="true">
 <img class="bg-main" src="assets/tower.jpg" alt="" aria-hidden="true">
@@ -592,6 +682,11 @@
   <div class="fa">امروز <span class="num" id="cnt">۱۲٬۸۴۷</span> نفر آب پاشیدند</div>
   <a class="en" href="https://www.patreon.com/c/rastfilm" target="_blank" rel="noopener" title="Rast Film on Patreon">Tirgan Splash · Rast Film</a>
 </div>
+
+<!-- 顶部转化按钮：直达 Patreon（启动页/游戏中/结算页常驻） -->
+<a class="topcta" id="topCta" href="https://www.patreon.com/c/rastfilm" target="_blank" rel="noopener">
+  <s class="dot"></s>Join on Patreon ↗
+</a>
 
 <!-- 金色节日问候：波斯语 + 英语，常驻彩旗下方，两条轮换 -->
 <div class="greet" aria-hidden="true">
@@ -635,6 +730,7 @@
     <div class="r-title" id="rTitle">TIRGAN BATTLE</div>
     <div class="r-score" id="rScore">0</div>
     <div class="r-rank" id="rRank">—</div>
+    <div class="r-breath" id="rBreath">Take a breath. Splash again.</div>
     <div class="r-btns">
       <button class="r-btn r-again" id="rAgain">PLAY AGAIN</button>
       <a class="r-btn r-pat" id="rPat" href="https://www.patreon.com/c/rastfilm" target="_blank" rel="noopener">BACKSTAGE · RAST FILM ↗</a>
@@ -692,6 +788,34 @@
     try{ a.currentTime = 0; a.volume = vol == null ? 1 : vol; a.play().catch(()=>{}); }catch(e){}
   }
 
+  /* 入场的一声长呼气：WebAudio 合成（带通噪声先升后落），不用额外音频文件。
+     只在玩家第一次点击（= 合法音频手势）后调用。 */
+  let _ac = null;
+  function breath(){
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!_ac) _ac = new AC();
+      if (_ac.state === 'suspended') _ac.resume();
+      const ac = _ac, t0 = ac.currentTime, dur = 1.6;
+      const src = ac.createBufferSource();
+      const buf = ac.createBuffer(1, Math.ceil(ac.sampleRate * dur), ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;   // 白噪 = 气息底噪
+      src.buffer = buf;
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.9;
+      bp.frequency.setValueAtTime(320, t0);
+      bp.frequency.exponentialRampToValueAtTime(1500, t0 + 0.62);   // 吸气上扬
+      bp.frequency.exponentialRampToValueAtTime(300, t0 + dur);     // 呼气落下
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.11, t0 + 0.55);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      src.connect(bp); bp.connect(g); g.connect(ac.destination);
+      src.start(t0); src.stop(t0 + dur + 0.05);
+    }catch(e){}
+  }
+
   /* ================= 双语系统（EN / فارسی） =================
      面向美国市场默认英语；右下角胶囊随时切换波斯语——提示、HUD、结算、大字、语音一起切。
      注意：波斯语是连写字，任何 letter-spacing / uppercase 都会把字母拆断，
@@ -704,6 +828,7 @@
       sub: 'Tap to begin · 3-MIN WATER BATTLE',
       time: 'TIME', score: 'SCORE',
       title: 'TIRGAN BATTLE',
+      breath: 'Take a breath. Splash again.',
       again: 'PLAY AGAIN',
       pat: 'BACKSTAGE · RAST FILM ↗',
       ranks: ['ROOKIE', 'SQUARE SAILOR', 'SPLASH MASTER', 'WATER GOD'],
@@ -723,6 +848,7 @@
       sub: 'برای شروع لمس کن · نبرد آبی ۳ دقیقه‌ای',
       time: 'زمان', score: 'امتیاز',
       title: 'نبرد تیرگان',
+      breath: 'یک نفس بکش. دوباره بپاش.',
       again: 'دوباره بازی کن',
       pat: 'پشت صحنه · RAST FILM ↗',
       ranks: ['تازه‌کار', 'ملوان میدان', 'استاد آب‌پاشی', 'خدای آب'],
@@ -799,6 +925,7 @@
     set('lTime', d.time);
     set('lScore', d.score);
     set('rTitle', d.title, true);
+    set('rBreath', d.breath, true);
     set('rAgain', d.again, true);
     set('rPat', d.pat, true);
     document.querySelectorAll('#langBtn button').forEach(b => b.classList.toggle('on', b.dataset.l === LANG));
@@ -1151,6 +1278,7 @@
       update(Math.min(50, raw));
     }
     draw();
+    updateYouMark();
     requestAnimationFrame(loop);
   }
 
@@ -1233,6 +1361,7 @@
         } else {
           player.duelFoe = null;
           player.state = 'walk';         // 走近目标再泼
+          tapMark(x, y);
           player.targetX = nudgeOffBasin(clampX(t.x + (t.x >= player.x ? -1 : 1) * innerWidth * 0.30, player), player);
         }
         return;
@@ -1244,12 +1373,14 @@
           player.basin = b; player.duelFoe = null;
           b._owner = player;                    // 出发即占用
           player.state = 'toBasin';
+          tapMark(x, y);
           player.targetX = clampX(bx + (player.x <= bx ? -1 : 1) * r.width * 0.12, player);
           return;
         }
       }
       player.duelFoe = null;
       player.state = 'walk';             // 点地面 → 跑过去
+      tapMark(x, y);
       player.targetX = nudgeOffBasin(clampX(x, player), player);
       return;
     }
@@ -1398,6 +1529,7 @@
   function start(){
     if (started) return;
     started = true;
+    breath();                            // 一声长呼气，进入"放下"的状态
     gate.classList.add('hide');
     setTimeout(() => { if (gate.parentNode) gate.remove(); }, 800);
     NAMES.forEach(n => POOL[n].forEach(a => {
@@ -1654,6 +1786,7 @@
   /* ================= 水仗模式 ================= */
   const player = CHARS[0];              // boy —— 玩家角色
   player.isPlayer = true;
+  player.speed = 86 + Math.random()*18; // 玩家明显快于 NPC（34~76）：点哪走哪，不被人群"拖"住
   let gameOn = false, gameT = 0, gameTmr = 0;
   let score = 0, combo = 0, comboT = 0, ammo = 5;
   let freezeMs = 0;                     // hit-stop 剩余定格时间
@@ -1712,6 +1845,40 @@
     document.getElementById('result').classList.remove('on');
     startGame();
   });
+
+  /* ================= 玩家标识：头顶 YOU 徽标 + 脚下光环 =================
+     解决"不知道在控制哪个"：战斗中始终明确标出玩家，走近看哪个人有金圈就是谁。 */
+  const youTag = document.createElement('div');
+  youTag.id = 'youTag';
+  youTag.innerHTML = '<span class="pill">YOU</span><s class="arr"></s>';
+  const youRing = document.createElement('div');
+  youRing.id = 'youRing';
+  document.body.appendChild(youRing);
+  document.body.appendChild(youTag);
+  function updateYouMark(){
+    if (!started || !gameOn || player.box.style.display === 'none'){
+      document.body.classList.remove('you-on'); return;
+    }
+    const r = player.box.getBoundingClientRect();
+    if (!r.width){ document.body.classList.remove('you-on'); return; }
+    document.body.classList.add('you-on');
+    const cx = r.left + r.width/2;
+    // 角色精灵图顶部约有 17% 透明留白（各帧一致），锚点 = 盒顶 + 17% 盒高，箭头尖正好搭在帽顶
+    youTag.style.left = cx + 'px';
+    youTag.style.top  = (r.top + r.height * 0.17) + 'px';
+    youRing.style.left = cx + 'px';
+    youRing.style.top  = (r.bottom - 3) + 'px';
+    youRing.style.width = Math.max(62, r.width * 0.94) + 'px';
+  }
+
+  /* 点击落点涟漪：金色圆环在指尖扩散，确认"指令已收到" */
+  function tapMark(x, y){
+    const d = document.createElement('div');
+    d.className = 'tapmark';
+    d.style.left = x + 'px'; d.style.top = y + 'px';
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 700);
+  }
 
   /* 位置只写 transform（不改 left），避免每帧强制同步布局 */
   function moveChar(c){
@@ -1849,10 +2016,14 @@
         const push = Math.min(1.6, (minGap - dist) * 0.35) * k;
         const s = dx >= 0 ? 1 : -1;
         // 路权：正在走的人有目标要赶，不推他（否则推力≈走速，永远走不到目标）；
-        // 两个都在走的靠 crowdAwareX 避开；都不动的对半分摊
-        const aMove = a.state === 'walk' || a.state === 'toBasin';
-        const bMove = b.state === 'walk' || b.state === 'toBasin';
+        // 两个都在走的靠 crowdAwareX 避开；都不动的对半分摊。
+        // 玩家拥有绝对路权：永远不被推（被 NPC 挤来挤去是"操控感差"的元凶之一），
+        // 玩家站着不动时 NPC 会绕开他。
+        const aMove = a.isPlayer || a.state === 'walk' || a.state === 'toBasin';
+        const bMove = b.isPlayer || b.state === 'walk' || b.state === 'toBasin';
         let wa = aMove ? 0 : 1, wb = bMove ? 0 : 1;
+        if (a.isPlayer){ wa = 0; wb = 1; }       // 玩家绝对路权：NPC 全额让位，玩家永不位移
+        else if (b.isPlayer){ wb = 0; wa = 1; }
         if (wa + wb === 0) continue;
         const fa = wa / (wa + wb), fb = wb / (wa + wb);
         a.x = clampX(a.x - s * push * fa, a);
@@ -2197,6 +2368,16 @@
   setTimeout(shoot, 9000);
   scheduleLine();
   setTimeout(() => { for (const c of CHARS) placeChar(c); }, 1200);
+
+  /* 入场淡入：黑场缓慢亮起（1.7s），不是硬切入 */
+  (() => {
+    const f = document.getElementById('fadein');
+    if (!f) return;
+    const go = () => setTimeout(() => f.classList.add('out'), 240);
+    if (document.readyState === 'complete') go();
+    else window.addEventListener('load', go);
+    setTimeout(() => { if (f.parentNode) f.remove(); }, 4600);
+  })();
 
 })();
 </script>
