@@ -394,6 +394,48 @@
   }
   .hud a.en:hover{opacity:.95;color:#ffd89a;text-shadow:0 0 12px rgba(255,216,154,.6)}
 
+  /* ---------- 节日问候（金色双语，彩旗下方；两条轮换显示） ---------- */
+  .greet{
+    position:absolute;left:0;right:0;z-index:8;
+    top:calc(env(safe-area-inset-top,0px) + 15%);
+    text-align:center;pointer-events:none;
+  }
+  .greet .g-slide{
+    position:absolute;left:0;right:0;top:0;padding:0 12px;
+    opacity:0;transition:opacity .95s ease;
+  }
+  .greet .g-slide.on{opacity:1}
+  .greet .g-fa{
+    font-size:clamp(26px,6.6vw,44px);font-weight:700;line-height:1.55;
+    background:linear-gradient(180deg,#fff6d8 6%,#ffd97a 40%,#eab04a 68%,#b97a1e 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 2px 8px rgba(0,0,0,.8)) drop-shadow(0 0 16px rgba(255,196,84,.35));
+  }
+  .greet .g-en{
+    margin-top:4px;
+    font-size:clamp(11px,2.7vw,16px);font-weight:600;
+    letter-spacing:4px;text-transform:uppercase;
+    background:linear-gradient(180deg,#fff3c9 10%,#ffd166 55%,#cf9330 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 2px 8px rgba(0,0,0,.8));
+  }
+  /* 第二条（诗句）字更长：缩小字号、取消强制大写、收紧字距，允许自然换行 */
+  .greet .g-slide.verse .g-fa{
+    font-size:clamp(15px,4.1vw,26px);font-weight:600;line-height:1.95;
+  }
+  .greet .g-slide.verse .g-en{
+    margin-top:2px;
+    font-size:clamp(10px,2.2vw,13px);font-weight:600;
+    letter-spacing:1.2px;text-transform:none;line-height:1.7;
+    max-width:94%;margin-left:auto;margin-right:auto;
+  }
+  @media (min-aspect-ratio: 1/1){
+    .greet .g-fa{font-size:clamp(30px,4.4vh,46px)}
+    .greet .g-slide.verse .g-fa{font-size:clamp(16px,2.9vh,28px)}
+  }
+
   /* ---------- 语言切换（EN / فارسی） ---------- */
   .lang{
     position:absolute;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
@@ -548,6 +590,18 @@
 <div class="hud">
   <div class="fa">امروز <span class="num" id="cnt">۱۲٬۸۴۷</span> نفر آب پاشیدند</div>
   <a class="en" href="https://www.patreon.com/c/rastfilm" target="_blank" rel="noopener" title="Rast Film on Patreon">Tirgan Splash · Rast Film</a>
+</div>
+
+<!-- 金色节日问候：波斯语 + 英语，常驻彩旗下方，两条轮换 -->
+<div class="greet" aria-hidden="true">
+  <div class="g-slide on">
+    <div class="g-fa" dir="rtl">تیرگان مبارک</div>
+    <div class="g-en">Happy Tirgan Festival</div>
+  </div>
+  <div class="g-slide verse">
+    <div class="g-fa" dir="rtl">هرچند پارس کهن است، سرنوشت او نو می‌شود</div>
+    <div class="g-en">Though Persia be old, its mandate is ever new</div>
+  </div>
 </div>
 
 <!-- 语言切换：EN / فارسی —— 常驻右下角，启动遮罩之上也可点 -->
@@ -754,6 +808,18 @@
     b.addEventListener('click', e => { e.stopPropagation(); LANG = b.dataset.l; applyLang(); });
   });
   applyLang();
+  /* 金色问候语轮换：提尔甘节快乐 ⇄ 波斯虽旧，其命惟新（fade 交叉淡入淡出，各停 6.5 秒） */
+  (() => {
+    const slides = [...document.querySelectorAll('.greet .g-slide')];
+    if (slides.length < 2) return;
+    let gi = 0;
+    setInterval(() => {
+      if (document.hidden) return;
+      slides[gi].classList.remove('on');
+      gi = (gi + 1) % slides.length;
+      slides[gi].classList.add('on');
+    }, 6500);
+  })();
   // 环境层：轻声群笑（随机间隔 + 随机语速）
   const amb = new Audio((window.SFX && SFX.laugh_d) || 'assets/laugh_d.mp3');
   amb.volume = 0.14; amb.preload = 'auto';
