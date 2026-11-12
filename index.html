@@ -448,7 +448,9 @@
 
   /* ---------- 横屏 / 桌面 ---------- */
   @media (min-aspect-ratio: 1/1){
-    .bg-main{background-size:contain;background-position:center 42%;background-repeat:no-repeat}
+    /* 背景 contain 居中：画面是一竖条（9:16），两侧是暗色模糊底。
+       人物/盆的坐标由 JS 映射到这条"舞台"里（见 stageW/stageLeft），不会再跑到画面外。 */
+    .bg-main{object-fit:contain;object-position:center 42%}
     .hud{top:calc(env(safe-area-inset-top,0px) + 22px)}
     .hud .fa{font-size:17px}
     .hint{bottom:calc(env(safe-area-inset-bottom,0px) + 30px)}
@@ -610,6 +612,7 @@
       layoutChars();
       for (const c of CHARS){ c.w = 0; placeChar(c); }   // 清掉宽度缓存，按新窗口重测
     }
+    layoutBasins();
   }
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 250));
@@ -1365,26 +1368,48 @@
     + '<ellipse cx="55" cy="29" rx="16" ry="3.8" fill="#bfe3f5" opacity=".55"/>'
     + '</svg>';
   const BASINS = [];
+
+  /* ---------- 舞台映射 ----------
+     竖屏：背景 cover 铺满全窗，舞台 = 全窗。
+     横屏/桌面：背景 contain 居中成一竖条（宽 = 高 × 图片宽高比），
+     人物、水盆的横坐标全部映射进这条舞台里，谁也不会跑到两侧暗边上。 */
+  const IMG_AR = 1152 / 2048;                       // tower.jpg 宽高比（9:16）
+  const mqLand = window.matchMedia ? window.matchMedia('(min-aspect-ratio: 1/1)') : null;
+  function isLand(){ return mqLand ? mqLand.matches : innerWidth > innerHeight; }
+  function stageW(){ return isLand() ? innerHeight * IMG_AR : innerWidth; }
+  function stageLeft(){ return (innerWidth - stageW()) / 2; }
+  function xOf(u){ return stageLeft() + u * stageW(); }   // 0~1 比例 → 舞台内像素
+  function uOf(x){ return stageW() ? (x - stageLeft()) / stageW() : 0; }
   // [x比例, 盆底高度%, 宽度, 层级] —— 盆贴着"服务对象"的脚线放，弯腰时盆就在脚边：
   //   层级按"谁在谁的脚线前面谁盖谁"重新分配（修复穿帮：此前盆 z=6/5/4 一刀切，
   //   玩家 z=4 从中景/远景盆前方走过时，盆会盖在玩家腰上，像"盆挂在身上"）。
-  //   屏幕上脚线越靠下（bottom% 越小）越靠前，遮挡关系必须是全序：
-  //   盆A(脚线3.2%) z10 > 玩家(5%) z8 > 盆B(13%) z7 > girl(13%) z6
-  //   > boy2(14%) z5 > girl2(15%) z4 > 盆C(19%) z3 > girl3(20%) z2 > boy3(21%) z1
-  [[0.20, 0.032, 'clamp(98px,15vw,190px)', 10],
-   [0.47, 0.130, 'clamp(84px,13vw,165px)', 7],
-   [0.755, 0.190, 'clamp(72px,11vw,140px)', 3]].forEach(pr => {
+  // [x比例, 盆底高度%, [最小px, 舞台宽占比, 最大px], 层级]
+  //   盆宽按"舞台宽"算（竖屏=全窗宽，横屏=中央画面宽），横屏时才不会比画面本身还宽。
+  [[0.20, 0.032, [98, 0.15, 190], 10],
+   [0.47, 0.130, [84, 0.13, 165], 7],
+   [0.755, 0.190, [72, 0.11, 140], 3]].forEach(pr => {
     const d = document.createElement('div');
     d.className = 'basin';
     d.innerHTML = svgBasin;
-    d.style.left = (pr[0]*100) + '%';
+    d.style.left = xOf(pr[0]) + 'px';   // 舞台坐标：横屏时落在中央画面内
     d.style.bottom = (pr[1]*100) + '%';       // 0.13 → 13%：贴着服务对象的脚线（此前误写成 0.13% 全贴地）
-    d.style.width = pr[2];
+    d.style.width = basinW(pr[2]) + 'px';
     d.style.zIndex = pr[3];
     d.dataset.z = pr[3];
+    d._pr = pr;                                // 保存比例，resize 时重排
     document.body.appendChild(d);
     BASINS.push(d);
   });
+  function basinW(spec){                       // [最小px, 舞台宽占比, 最大px] → 像素
+    return Math.max(spec[0], Math.min(spec[2], stageW() * spec[1]));
+  }
+  function layoutBasins(){
+    for (const b of BASINS){
+      if (!b._pr) continue;
+      b.style.left = xOf(b._pr[0]) + 'px';
+      b.style.width = basinW(b._pr[2]) + 'px';
+    }
+  }
 
   /* ================= 节日装饰：彩旗（两条垂弧三角旗） ================= */
   (function buildBunting(){
@@ -1631,8 +1656,8 @@
   function placeChar(c){
     if (c.box.style.display === 'none') return;
     if (!c.w) c.w = c.box.offsetWidth || 0;
-    c.x = nudgeOffBasin(c.u * innerWidth, c, true);  // 出生点只避开盆心（大系数会把出生点推出屏幕、被 clamp 钳回盆心）
-    c.u = c.x / innerWidth;
+    c.x = nudgeOffBasin(xOf(c.u), c, true);  // 出生点只避开盆心（大系数会把出生点推出屏幕、被 clamp 钳回盆心）
+    c.u = uOf(c.x);
     moveChar(c);
   }
 
@@ -1689,12 +1714,15 @@
   }
 
   function layoutChars(){
-    const k = (innerWidth / innerHeight > 1) ? 1.66 : 1;
+    // 横屏时背景是居中竖条，人物比例要贴近竖屏（1.66 会大得撑满画面）
+    const k = (innerWidth / innerHeight > 1) ? 1.15 : 1;
     for (const c of CHARS) c.box.style.height = (c.def.vh * k) + 'vh';
   }
   function clampX(px, c){
     const half = (c.w || c.box.offsetWidth) * 0.5 + 8;
-    return Math.max(half, Math.min(innerWidth - half, px));
+    const lo = stageLeft() + half, hi = stageLeft() + stageW() - half;
+    if (hi <= lo) return stageLeft() + stageW() / 2;   // 极窄：钉在舞台中央
+    return Math.max(lo, Math.min(hi, px));
   }
   function centerOf(el, ry){
     const r = el.getBoundingClientRect();
@@ -1716,7 +1744,7 @@
   function crowdAwareX(x, c){
     let best = x, bestScore = -1;
     for (let t = 0; t < 4; t++){
-      const cand = t === 0 ? x : innerWidth * (0.08 + Math.random() * 0.84);
+      const cand = t === 0 ? x : xOf(0.08 + Math.random() * 0.84);
       let score = 1e9;
       for (const o of CHARS){
         if (o === c || o.box.style.display === 'none') continue;
@@ -1762,8 +1790,8 @@
         const fa = wa / (wa + wb), fb = wb / (wa + wb);
         a.x = clampX(a.x - s * push * fa, a);
         b.x = clampX(b.x + s * push * fb, b);
-        if (fa) a.u = a.x / innerWidth;
-        if (fb) b.u = b.x / innerWidth;
+        if (fa) a.u = uOf(a.x);
+        if (fb) b.u = uOf(b.x);
         if (fa) moveChar(a);
         if (fb) moveChar(b);
       }
@@ -1797,7 +1825,7 @@
             play(c, 'walk', 100000);
           }
         }
-        c.u = c.x / innerWidth;
+        c.u = uOf(c.x);
         moveChar(c);
         // 每一步在脚底扬一小撮土
         c.dustT = (c.dustT || 0) - dtms;
@@ -1850,7 +1878,7 @@
       const bw = c.basin.getBoundingClientRect().width;
       const off = bw * 0.10 * (Math.random() < 0.5 ? -1 : 1);
       c.x = clampX(bx + off, c);
-      c.u = c.x / innerWidth;
+      c.u = uOf(c.x);
       c.dir = bx >= c.x ? 1 : -1;
       // 层级不需要动：全序深度下，脚线与盆匹配的角色本来就在对应盆之后（盆沿挡脚=站在盆后），
       // 被调度到"更远"盆时则天然站在盆前方，人画在盆上 —— 两种情况透视都正确。
@@ -1930,7 +1958,7 @@
       const r = target.box.getBoundingClientRect();
       tx = r.left + r.width/2; ty = r.top + r.height*0.38;
     } else {
-      tx = W*(0.2 + Math.random()*0.6);
+      tx = xOf(0.2 + Math.random()*0.6);
       ty = H*(0.5 + Math.random()*0.3);
     }
     // 先转向目标再泼（transform 只能经 moveChar 写，直接覆写会把 translateX 冲掉 = 瞬移）
@@ -2053,7 +2081,7 @@
       const r = Math.random();
       if (r < 0.28){
         c.state = 'walk';
-        c.targetX = crowdAwareX(innerWidth * (0.08 + Math.random()*0.84), c);
+        c.targetX = crowdAwareX(xOf(0.08 + Math.random()*0.84), c);
       } else if (r < 0.70 && now - (c.nextAtk || 0) > 2400 && now - lastNpcAtk > 500){
         c.nextAtk = now + 3200 + Math.random()*3600;
         // 四成概率找人"对泼"：走到对方面前，你来我往 —— 这是广场，不是单人练习场
@@ -2079,7 +2107,7 @@
             c.targetX = clampX(bx + (c.x <= bx ? -1 : 1) * br.width * 0.12, c);
           } else {
             c.state = 'walk';
-            c.targetX = crowdAwareX(innerWidth * (0.08 + Math.random()*0.84), c);
+            c.targetX = crowdAwareX(xOf(0.08 + Math.random()*0.84), c);
           }
         }
         lastNpcAtk = now;
