@@ -56,6 +56,7 @@
      ========================================================== */
   .char-box{
     position:absolute;z-index:4;
+    left:0;                       /* 水平定位全靠 transform，基点固定，避免各浏览器静态位置差异 */
     transform-origin:50% 100%;
     pointer-events:none;
     will-change:transform;
@@ -133,22 +134,26 @@
     50%    {transform:rotate(-1.8deg) translateY(-2px)}
   }
 
-  /* ---------- 动作：舀水（蹲下，不是倒下） ---------- */
-  .act.a-scoop{animation:scoopAct 1s cubic-bezier(.35,.9,.3,1)}
+  /* ---------- 动作：舀水（正面 Q 版的弯腰 = 深蹲压扁 + 头沉下去看盆，横向只微倾 6°，
+     大角度侧倾会读成"摔倒"。rotate 正值 = 上身朝朝向方向(+x=面向水盆)微倾） ---------- */
+  .act.a-scoop{animation:scoopAct 1.4s cubic-bezier(.4,.55,.35,1)}
   @keyframes scoopAct{
-    0%  {transform:translateY(0)    rotate(0)     scale(1,1)}
-    18% {transform:translateY(-3px) rotate(-2deg) scale(1.012,.98)}
-    45% {transform:translateY(4px)  rotate(6deg)  scale(1.10,.80)}
-    68% {transform:translateY(5px)  rotate(7deg)  scale(1.11,.79)}
-    88% {transform:translateY(-2px) rotate(-1deg) scale(.99,1.02)}
-    100%{transform:translateY(0)    rotate(0)     scale(1,1)}
+    0%  {transform:rotate(0)     translateY(0)     scale(1,1)}
+    12% {transform:rotate(-3deg) translateY(-1.5%) scale(1.01,.995)}
+    38% {transform:rotate(6deg)  translateY(0)     scale(1.07,.78)}
+    52% {transform:rotate(7deg)  translateY(0)     scale(1.08,.75)}
+    68% {transform:rotate(7deg)  translateY(0)     scale(1.08,.76)}
+    84% {transform:rotate(-2deg) translateY(-1%)  scale(.99,1.02)}
+    100%{transform:rotate(0)     translateY(0)     scale(1,1)}
   }
-  .headWrap.a-scoop{animation:scoopHead 1s cubic-bezier(.35,.9,.3,1)}
+  .headWrap.a-scoop{animation:scoopHead 1.4s cubic-bezier(.4,.55,.35,1)}
   @keyframes scoopHead{
-    0%  {transform:rotate(0) translateY(0)}
-    40% {transform:rotate(3deg) translateY(3px)}
-    70% {transform:rotate(3.5deg) translateY(3px)}
-    100%{transform:rotate(0) translateY(0)}
+    0%  {transform:translateY(0)   rotate(0)}
+    12% {transform:translateY(-1%) rotate(-3deg)}
+    40% {transform:translateY(7%)  rotate(6deg)}
+    60% {transform:translateY(8%)  rotate(7deg)}
+    84% {transform:translateY(-1%) rotate(-2deg)}
+    100%{transform:translateY(0)   rotate(0)}
   }
 
   /* ---------- 动作：泼水（后仰蓄力 → 前扑 → 回弹） ---------- */
@@ -268,6 +273,32 @@
     filter:drop-shadow(0 5px 9px rgba(0,0,0,.38));
   }
 
+  /* ---------- 节日氛围：暖光 / 彩旗 / 湿身 ---------- */
+  .glow{
+    position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:
+      radial-gradient(ellipse 62% 34% at 68% 16%, rgba(255,196,110,.17) 0%, rgba(255,196,110,0) 70%),
+      radial-gradient(ellipse 48% 26% at 20% 12%, rgba(255,170,90,.11) 0%, rgba(255,170,90,0) 70%);
+    animation:glowPulse 9s ease-in-out infinite alternate;
+  }
+  @keyframes glowPulse{from{opacity:.72}to{opacity:1}}
+
+  .bunting{
+    position:absolute;left:0;top:0;z-index:3;width:100%;height:auto;
+    pointer-events:none;opacity:.94;
+    filter:drop-shadow(0 3px 7px rgba(0,0,0,.45));
+    transform-origin:50% 0;
+    animation:buntSway 8.5s ease-in-out infinite;
+  }
+  .bunting.b2{top:13px;opacity:.8;animation-duration:10.5s;animation-delay:-3.4s}
+  @keyframes buntSway{
+    0%,100%{transform:rotate(-.5deg)}
+    50%    {transform:rotate(.5deg)}
+  }
+
+  /* 湿身：挨了几瓢的人衣料暗一点、泛水光 */
+  .char-box.soak{filter:saturate(.86) brightness(1.05)}
+
   /* ---------- 金线（箭） ---------- */
   .line-wrap{
     position:absolute;z-index:5;left:0;right:0;top:26%;
@@ -361,6 +392,7 @@
 <div class="bg-main"></div>
 <div class="vignette"></div>
 <div class="wet"></div>
+<div class="glow"></div>
 
 <div class="line-wrap"><div class="line" id="line"></div></div>
 
@@ -406,10 +438,11 @@
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     if (CHARS.length){
       layoutChars();
-      for (const c of CHARS) placeChar(c);
+      for (const c of CHARS){ c.w = 0; placeChar(c); }   // 清掉宽度缓存，按新窗口重测
     }
   }
   window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 250));
 
   /* ================= 音效池 ================= */
   const NAMES = ['ab_m','ab_f','bezan_m','bezan_f','ey_m','ey_f','tirgan_m','tirgan_f','laugh_a','laugh_b','laugh_c'];
@@ -427,7 +460,7 @@
     const arr = POOL[name];
     if (!arr) return;
     _idx[name] = ((_idx[name] || 0) + 1) % arr.length;
-    const a = POOL[_idx[name]];
+    const a = arr[_idx[name]];
     try{ a.currentTime = 0; a.volume = vol == null ? 1 : vol; a.play().catch(()=>{}); }catch(e){}
   }
   // 环境层：轻声群笑（随机间隔 + 随机语速）
@@ -449,6 +482,8 @@
   const beads = [];   // 贴在屏幕上的水珠
   const trail = [];   // 划动的水痕
   const puffs = [];   // 水团（泼出去的那一片）
+  const petals = [];  // 飘落的玫瑰花瓣（提尔甘的节庆元素）
+  const sparks = [];  // 金色亮片（泼得狠时的火星）
 
   const MAX_DROPS = 460;
   const MAX_BEADS = 120;
@@ -481,6 +516,50 @@
         decay: 0.0025 + Math.random() * 0.004
       });
     }
+    // 泼得狠：撒一把金色亮片 —— 节日的火星
+    if (power > 0.75){
+      for (let i = 0; i < 5 && sparks.length < 26; i++){
+        sparks.push({
+          x: x + (Math.random()-0.5) * 56, y: y + (Math.random()-0.5) * 56,
+          vy: -0.4 - Math.random() * 0.9,
+          r: 0.8 + Math.random() * 1.5,
+          life: 1, decay: 0.018 + Math.random() * 0.02
+        });
+      }
+    }
+  }
+
+  /* 玫瑰花瓣：缓慢飘落，带横向摆动（提尔甘节要撒玫瑰水/花瓣） */
+  const PETAL_COLORS = ['rgba(244,183,197,','rgba(232,168,180,','rgba(240,214,170,','rgba(226,140,150,'];
+  function spawnPetals(n){
+    for (let i = 0; i < n && petals.length < 20; i++){
+      petals.push({
+        x: Math.random() * W, y: -14 - Math.random() * H * 0.5,
+        vy: 0.34 + Math.random() * 0.5,
+        ph: Math.random() * 6.28, sw: 0.35 + Math.random() * 0.75,
+        rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.02,
+        w: 5 + Math.random() * 6, h: 3.2 + Math.random() * 3.4,
+        hue: Math.floor(Math.random() * 4)
+      });
+    }
+  }
+
+  /* 舀水：蹲到盆边时，一大捧水从盆里升起来，向角色手心飘 */
+  function spawnScoop(x, y, c){
+    for (let i = 0; i < 14 && drops.length < MAX_DROPS; i++){
+      drops.push({
+        x: x + (Math.random()-0.5) * 26, y: y + (Math.random()-0.5) * 8,
+        vx: -(c.dir || 1) * (0.4 + Math.random() * 1.1),
+        vy: -1.7 - Math.random() * 2.0,
+        r: 1.3 + Math.random() * 3.0,
+        life: .95, decay: 0.014 + Math.random() * 0.012
+      });
+    }
+    if (puffs.length < 64){
+      puffs.push({ x: x, y: y - 6, vx: -(c.dir || 1) * 0.7, vy: -1.5,
+                   r: 9 + Math.random()*4, life: 1, decay: 0.02 });
+    }
+    spawnSplash(x, y, 0, -1, 0.3);
   }
 
   // 落地溅起：水珠砸到地面，向上弹几点
@@ -573,11 +652,44 @@
       trail[i].life -= 0.055;
       if (trail[i].life <= 0) trail.splice(i, 1);
     }
+
+    for (let i = petals.length - 1; i >= 0; i--){
+      const p = petals[i];
+      p.ph += 0.02;
+      p.x += Math.sin(p.ph) * p.sw;
+      p.y += p.vy;
+      p.rot += p.vr;
+      if (p.y > H + 16){          // 落出屏幕就回到顶部循环飘
+        p.y = -14;
+        p.x = Math.random() * W;
+      }
+    }
+
+    for (let i = sparks.length - 1; i >= 0; i--){
+      const s = sparks[i];
+      s.y += s.vy;
+      s.life -= s.decay;
+      if (s.life <= 0) sparks.splice(i, 1);
+    }
   }
 
   function draw(){
     ctx.clearRect(0, 0, W, H);
     ctx.lineCap = 'round';
+
+    // 花瓣（在水花后面飘）
+    for (const p of petals){
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot + Math.sin(p.ph) * 0.6);
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = PETAL_COLORS[p.hue] + '0.8)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.w * 0.5, p.h * 0.5, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
 
     // 水痕
     for (const t of trail){
@@ -641,6 +753,17 @@
       ctx.globalAlpha = a * 0.55;
       ctx.fillStyle = 'rgba(255,255,255,1)';
       ctx.beginPath(); ctx.arc(p.x - p.r*0.3, p.y - p.r*0.3, p.r*0.4, 0, 6.2832); ctx.fill();
+    }
+
+    // 金色亮片
+    for (const s of sparks){
+      const a = Math.max(0, s.life);
+      ctx.globalAlpha = a * 0.35;
+      ctx.fillStyle = 'rgba(255,236,190,1)';
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r * 1.9, 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = a * 0.9;
+      ctx.fillStyle = 'rgba(255,214,140,1)';
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.2832); ctx.fill();
     }
     ctx.globalAlpha = 1;
   }
@@ -709,7 +832,7 @@
       lastSfx = now;
     }
     const c = hitTest(x, y);
-    if (c) react(c, 0.9);
+    if (c) react(c, 0.9, {x: x, y: y});
   }
 
   function onMove(x, y){
@@ -737,13 +860,13 @@
     }
 
     const c = hitTest(x, y);
-    if (c) react(c, 0.9);
+    if (c) react(c, 0.9, {x: x, y: y});
 
     px = x; py = y; pt = now;
   }
 
-  /* 被泼到：缩 → 甩水 → 有时立刻还手 */
-  function react(c, gain){
+  /* 被泼到：缩 → 甩水 → 有时还手（NPC 或玩家） */
+  function react(c, gain, fromPlayer){
     const now = performance.now();
     // 同一个角色 260ms 内不重复触发（避免连点抖动）
     if (now - (c.lastHit || 0) < 260) return;
@@ -766,14 +889,35 @@
       else               sfx('laugh_c', 0.80);
     }
 
-    // 被泼急了会立刻跑去还手 —— 广场才会"打起来"
-    if (c.state === 'idle' && started && Math.random() < 0.34){
+    // 玩家泼我 → 四成概率朝着玩家的手指泼回去（和玩家真正打起来）
+    if (fromPlayer && c.state === 'idle' && started && Math.random() < 0.4){
+      const pt = fromPlayer;
+      setTimeout(() => {
+        if (!started || c.state !== 'idle') return;
+        const from = centerOf(c.box, 0.36);
+        c.dir = pt.x >= c.x ? 1 : -1;
+        moveChar(c);
+        play(c, 'lunge', 760);
+        setTimeout(() => {
+          if (!started) return;
+          spawnArc(from.x, from.y, pt.x, pt.y, 26);
+          const n2 = performance.now();
+          if (n2 - lastNpcSfx > 2400){
+            sfx(Math.random() < 0.5 ? 'bezan_m' : 'bezan_f', 0.6);
+            lastNpcSfx = n2;
+          }
+        }, 180);
+      }, 320 + Math.random() * 280);
+      return;
+    }
+    // 被泼急了会跑去舀水再泼回去 —— 广场才会"打起来"（决斗中不许开溜）
+    if (c.state === 'idle' && started && !c.duelLock && Math.random() < 0.22){
       c.basin = nearestBasin(c);
       const br = c.basin.getBoundingClientRect();
       const bx = br.left + br.width/2;
       const side = c.x <= bx ? -1 : 1;
       c.state = 'toBasin';
-      c.targetX = clampX(bx + side*(br.width*0.5 + c.box.offsetWidth*0.30), c);
+      c.targetX = clampX(bx + side*(br.width*0.5 + c.box.offsetWidth*0.12), c);
     }
   }
 
@@ -802,8 +946,11 @@
       try{ a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(()=>{}); }catch(e){}
     }));
     scheduleAmb();
+    spawnPetals(14);
     setTimeout(() => hint.classList.add('gone'), 6000);
   }
+  // 花瓣循环补货
+  setInterval(() => { if (started && !document.hidden && petals.length < 14) spawnPetals(3); }, 4000);
   gate.addEventListener('pointerdown', e => { e.stopPropagation(); start(); });
   gate.addEventListener('click', () => start());
 
@@ -837,6 +984,39 @@
     document.body.appendChild(d);
     BASINS.push(d);
   });
+
+  /* ================= 节日装饰：彩旗（两条垂弧三角旗） ================= */
+  (function buildBunting(){
+    const NS = 'http://www.w3.org/2000/svg';
+    const mk = (y1, sag, colors, cls) => {
+      const svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('viewBox', '0 0 1000 96');
+      svg.setAttribute('preserveAspectRatio', 'none');
+      svg.classList.add('bunting');
+      if (cls) svg.classList.add(cls);
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', 'M0 ' + y1 + ' Q 500 ' + (y1 + sag) + ' 1000 ' + y1);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', 'rgba(64,40,24,.8)');
+      path.setAttribute('stroke-width', '2.5');
+      path.setAttribute('vector-effect', 'non-scaling-stroke');
+      svg.appendChild(path);
+      const n = 15;
+      for (let i = 0; i < n; i++){
+        const t = (i + 0.5) / n;
+        const px = t * 1000;
+        const py = y1 + 2 * t * (1 - t) * sag;           // 二次贝塞尔上的 y
+        const tri = document.createElementNS(NS, 'path');
+        tri.setAttribute('d', 'M' + (px-13) + ' ' + py + ' L' + (px+13) + ' ' + py + ' L' + px + ' ' + (py+33) + ' Z');
+        tri.setAttribute('fill', colors[i % colors.length]);
+        tri.setAttribute('opacity', '.92');
+        svg.appendChild(tri);
+      }
+      document.body.appendChild(svg);
+    };
+    mk(4, 30, ['#c05a40','#e0a33a','#3f8ea8','#e8dcc4','#4e9e6f']);
+    mk(8, 42, ['#e0a33a','#b0563f','#e8dcc4','#3f8ea8','#c05a40'], 'b2');
+  })();
   function basinX(b){ const r = b.getBoundingClientRect(); return r.left + r.width/2; }
   function nearestBasin(c){
     let best = BASINS[0], bd = 1e9;
@@ -911,7 +1091,8 @@
             x:0, u:def.fx, dir: Math.random() < 0.5 ? -1 : 1,
             speed: 34 + Math.random()*42, state:'idle',
             until: performance.now() + 1400 + Math.random()*2800,
-            targetX: 0, tmr: 0, actName: ''};
+            targetX: 0, tmr: 0, actName: '',
+            wet: 0, nextAtk: 0, duelFoe: null, soakTmr: 0, duelLock: false};
   }
 
   CHAR_DEFS.forEach((def, i) => {
@@ -1009,59 +1190,151 @@
       c.state = 'scoop';
       const bx = basinX(c.basin);
       c.dir = bx >= c.x ? 1 : -1;
-      play(c, 'scoop', 1000);
-      setTimeout(() => {
+      moveChar(c);                              // 立刻转身面向水盆
+      play(c, 'scoop', 1400);
+      setTimeout(() => {                        // 蹲到盆边：一捧水升起来
+        if (!started || !c.basin || !c.basin.isConnected) return;
         const r = c.basin.getBoundingClientRect();
-        if (started) spawnSplash(r.left + r.width/2, r.top + r.height*0.28, 0, -1, 0.35);
-      }, 330);
+        spawnScoop(r.left + r.width/2, r.top + r.height*0.30, c);
+      }, 640);
       setTimeout(() => {
         throwWater(c);
         c.state = 'idle';
         c.until = performance.now() + 1500 + Math.random()*2600;
-      }, 860);
+      }, 1150);
     } else {
       c.state = 'idle';
-      c.until = performance.now() + 1100 + Math.random()*2300;
-      const nx = nudgeOffBasin(c.x, c);
-      if (Math.abs(nx - c.x) > 1){ c.x = nx; moveChar(c); }
+      const foe = c.duelFoe; c.duelFoe = null;
+      if (foe && foe.box.style.display !== 'none'){
+        // 走到对方面前：转身对峙，多回合对攻
+        c.dir = foe.x >= c.x ? 1 : -1;
+        moveChar(c);
+        if (foe.state === 'idle'){
+          foe.dir = c.x >= foe.x ? 1 : -1;
+          moveChar(foe);
+        }
+        c.until = performance.now() + 400;
+        setTimeout(() => { if (started && c.state === 'idle') exchange(c, foe, 0); }, 460);
+        // 拉一个看客：走到旁边观战，一会儿大笑
+        const onl = CHARS.find(o => o !== c && o !== foe && o.box.style.display !== 'none'
+          && o.state === 'idle' && Math.abs(o.x - c.x) < innerWidth * 0.5);
+        if (onl){
+          onl.state = 'walk';
+          onl.targetX = nudgeOffBasin(clampX((c.x + foe.x)/2 + (Math.random() < 0.5 ? -1 : 1) * innerWidth * 0.09, onl), onl);
+          onl.until = performance.now() + 3600;
+          setTimeout(() => {
+            if (started && onl.state === 'idle'){
+              play(onl, 'laugh', 950);
+              onl.until = performance.now() + 1500;
+            }
+          }, 2800);
+        }
+      } else {
+        c.until = performance.now() + 1100 + Math.random()*2300;
+        const nx = nudgeOffBasin(c.x, c);
+        if (Math.abs(nx - c.x) > 1){ c.x = nx; moveChar(c); }
+      }
     }
   }
 
-  function throwWater(c, chain){
+  function throwWater(c, chain, aimAt){
     const from = centerOf(c.box, 0.36);
-    let tx, ty, target = null;
-    if (Math.random() < 0.55){
-      const others = CHARS.filter(o => o !== c && o.box.style.display !== 'none');
-      if (others.length){
-        target = others[Math.floor(Math.random()*others.length)];
-        const r = target.box.getBoundingClientRect();
-        tx = r.left + r.width/2; ty = r.top + r.height*0.38;
-      }
+    let tx, ty, target = aimAt || null;
+    if (!target && Math.random() < 0.75){
+      // 找一个"够得着"的人泼：太远的不泼，别像隔空扔水
+      const pool = CHARS.filter(o => o !== c && o.box.style.display !== 'none'
+        && Math.abs(o.x - c.x) < innerWidth * 0.55);
+      if (pool.length) target = pool[Math.floor(Math.random() * pool.length)];
     }
-    if (target == null){
+    if (target){
+      const r = target.box.getBoundingClientRect();
+      tx = r.left + r.width/2; ty = r.top + r.height*0.38;
+    } else {
       tx = W*(0.2 + Math.random()*0.6);
       ty = H*(0.5 + Math.random()*0.3);
     }
-    // 先转向目标再泼
+    // 先转向目标再泼（transform 只能经 moveChar 写，直接覆写会把 translateX 冲掉 = 瞬移）
     c.dir = tx >= c.x ? 1 : -1;
-    c.box.style.transform = 'scaleX(' + c.dir + ')';
+    moveChar(c);
     // 泼的动作先起，水后出（0.18s 差）
     play(c, 'lunge', 760);
     setTimeout(() => {
       const T = spawnArc(from.x, from.y, tx, ty, target ? 32 : 24);
       const now = performance.now();
-      if (now - lastNpcSfx > 3200){
-        sfx(Math.random() < 0.5 ? 'ab_m' : 'ab_f', 0.42);
+      if (now - lastNpcSfx > 2400){
+        sfx(Math.random() < 0.5 ? 'ab_m' : 'ab_f', 0.45);
         lastNpcSfx = now;
       }
-      if (target) setTimeout(() => { if (started) react(target, 0.7); }, T * 16);
+      if (target) setTimeout(() => { if (started) soak(target, c); }, T * 16);
       // 泼上瘾了会连泼 —— 泼水节得打起来才热闹
       const n = chain || 0;
-      if (n < 2 && Math.random() < 0.34){
-        setTimeout(() => { if (started && c.state === 'idle') throwWater(c, n + 1); },
+      if (n < 2 && Math.random() < 0.42){
+        setTimeout(() => { if (started && c.state === 'idle') throwWater(c, n + 1, target); },
                    520 + Math.random()*260);
       }
     }, 180);
+  }
+
+  /* 被 NPC 泼中：湿身记一笔 → 缩一下甩水 → 五成还手 → 旁观者看热闹 */
+  function soak(t, from){
+    t.wet = Math.min(4, (t.wet || 0) + 1);
+    if (t.wet >= 2 && !t.box.classList.contains('soak')){
+      t.box.classList.add('soak');
+      clearTimeout(t.soakTmr);
+      t.soakTmr = setTimeout(() => { t.box.classList.remove('soak'); t.wet = 0; }, 5200);
+      // 湿透了：身上往下滴水
+      const r = t.box.getBoundingClientRect();
+      for (let i = 0; i < 7 && drops.length < MAX_DROPS; i++){
+        drops.push({
+          x: r.left + r.width * (0.2 + Math.random()*0.6),
+          y: r.top + r.height * (0.25 + Math.random()*0.4),
+          vx: (Math.random()-0.5)*0.5, vy: 0.6,
+          r: 1 + Math.random()*1.6, life: .8,
+          decay: 0.02 + Math.random()*0.015
+        });
+      }
+    }
+    react(t, 0.75);
+    // 还手：直接朝着泼我的人泼回去 —— 这才是打水仗
+    if (started && t.state === 'idle' && Math.random() < 0.5){
+      setTimeout(() => { if (started && t.state === 'idle') throwWater(t, 0, from); },
+                 320 + Math.random()*300);
+    }
+    // 旁观的人看热闹：凑过来笑
+    if (Math.random() < 0.4){
+      const crowd = CHARS.filter(o => o !== t && o !== from && o.box.style.display !== 'none'
+        && o.state === 'idle' && Math.abs(o.x - t.x) < innerWidth * 0.35);
+      if (crowd.length){
+        const o = crowd[Math.floor(Math.random() * crowd.length)];
+        setTimeout(() => { if (started && o.state === 'idle') play(o, 'laugh', 900); },
+                   300 + Math.random()*400);
+      }
+    }
+  }
+
+  /* 对泼：两人你来我往打几个回合，最多 4 轮，打完有人大笑收场。
+     决斗期间 duelLock 锁定双方 —— 调度器不许把他们调走，挨泼也不许开溜去舀水 */
+  function exchange(a, b, round){
+    if (!started) return;
+    if (a.box.style.display === 'none' || b.box.style.display === 'none'){ a.duelLock = b.duelLock = false; return; }
+    if (round >= 4 || Math.random() < 0.28){
+      a.duelLock = b.duelLock = false;
+      a.until = b.until = performance.now() + 1600;
+      const winner = Math.random() < 0.5 ? a : b;
+      const loser  = winner === a ? b : a;
+      if (winner.state === 'idle') play(winner, 'laugh', 950);
+      if (loser.state === 'idle')  play(loser, 'shake', 800);
+      return;
+    }
+    a.duelLock = b.duelLock = true;
+    const atk = round % 2 === 0 ? a : b;
+    const dfd = atk === a ? b : a;
+    // 面对面站好再出手
+    atk.dir = dfd.x >= atk.x ? 1 : -1; moveChar(atk);
+    dfd.dir = atk.x >= dfd.x ? 1 : -1; moveChar(dfd);
+    atk.until = dfd.until = performance.now() + 1600;   // 站桩接招
+    throwWater(atk, 0, dfd);
+    setTimeout(() => exchange(a, b, round + 1), 950 + Math.random() * 400);
   }
 
   setInterval(() => {
@@ -1069,20 +1342,34 @@
     const now = performance.now();
     for (const c of CHARS){
       if (c.box.style.display === 'none') continue;
+      if (c.duelLock) continue;                 // 决斗锁：调度器不干预
       if (c.state !== 'idle' || now < c.until) continue;
       const r = Math.random();
-      if (r < 0.30){
+      if (r < 0.28){
         c.state = 'walk';
         c.targetX = nudgeOffBasin(innerWidth * (0.08 + Math.random()*0.84), c);
-      } else if (r < 0.68 && now - lastNpcAtk > 900){
-        c.basin = nearestBasin(c);
-        const br = c.basin.getBoundingClientRect();
-        const bx = br.left + br.width/2;
-        const side = c.x <= bx ? -1 : 1;
-        c.state = 'toBasin';
-        c.targetX = clampX(bx + side*(br.width*0.5 + (c.w || c.box.offsetWidth)*0.30), c);
+      } else if (r < 0.70 && now - (c.nextAtk || 0) > 2400 && now - lastNpcAtk > 500){
+        c.nextAtk = now + 3200 + Math.random()*3600;
+        // 四成概率找人"对泼"：走到对方面前，你来我往 —— 这是广场，不是单人练习场
+        const foes = CHARS.filter(o => o !== c && o.box.style.display !== 'none'
+          && o.state === 'idle' && Math.abs(o.x - c.x) > innerWidth*0.16);
+        if (foes.length && Math.random() < 0.62){
+          const foe = foes[Math.floor(Math.random()*foes.length)];
+          const gap = Math.max(70, innerWidth*0.17);
+          const mid = (c.x + foe.x)/2;
+          c.targetX = nudgeOffBasin(clampX(mid + gap/2 * (c.x <= foe.x ? -1 : 1), c), c);
+          c.state = 'walk';
+          c.duelFoe = foe;
+        } else {
+          c.basin = nearestBasin(c);
+          const br = c.basin.getBoundingClientRect();
+          const bx = br.left + br.width/2;
+          const side = c.x <= bx ? -1 : 1;
+          c.state = 'toBasin';
+          c.targetX = clampX(bx + side*(br.width*0.5 + (c.w || c.box.offsetWidth)*0.12), c);
+        }
         lastNpcAtk = now;
-      } else if (r < 0.86){
+      } else if (r < 0.88){
         // 原地：甩水 / 仰头笑 / 蹦一下
         const rr = Math.random();
         if (rr < 0.40){ play(c, 'shake', 800); c.until = now + 1200 + Math.random()*2000; }
