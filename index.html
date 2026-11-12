@@ -421,19 +421,20 @@
     -webkit-text-fill-color:transparent;color:transparent;
     filter:drop-shadow(0 2px 8px rgba(0,0,0,.8));
   }
-  /* 第二条（诗句）字更长：缩小字号、取消强制大写、收紧字距，允许自然换行 */
+  /* 第二条（诗句）字更长：缩小字号、取消强制大写、收紧字距，限制宽度自然折成两行 */
   .greet .g-slide.verse .g-fa{
-    font-size:clamp(15px,4.1vw,26px);font-weight:600;line-height:1.95;
+    font-size:clamp(14px,3.4vw,21px);font-weight:600;line-height:2.05;
+    max-width:76%;margin-left:auto;margin-right:auto;
   }
   .greet .g-slide.verse .g-en{
-    margin-top:2px;
-    font-size:clamp(10px,2.2vw,13px);font-weight:600;
+    margin-top:5px;
+    font-size:clamp(10px,2vw,12px);font-weight:600;
     letter-spacing:1.2px;text-transform:none;line-height:1.7;
-    max-width:94%;margin-left:auto;margin-right:auto;
+    max-width:82%;margin-left:auto;margin-right:auto;
   }
   @media (min-aspect-ratio: 1/1){
     .greet .g-fa{font-size:clamp(30px,4.4vh,46px)}
-    .greet .g-slide.verse .g-fa{font-size:clamp(16px,2.9vh,28px)}
+    .greet .g-slide.verse .g-fa{font-size:clamp(15px,2.5vh,22px)}
   }
 
   /* ---------- 语言切换（EN / فارسی） ---------- */
