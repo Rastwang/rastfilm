@@ -1426,10 +1426,14 @@
     document.body.appendChild(gb);
     requestAnimationFrame(() => { gb.style.opacity = '1'; });
     c._ghostBasin = gb;
-    setTimeout(() => {                              // 起身端水：盆淡出并移除
-      if (gb.isConnected){ gb.style.opacity = '0'; setTimeout(() => gb.remove(), 320); }
+    setTimeout(() => {                              // 舀完+泼水过后：盆慢慢淡出（多留一会儿，看得清）
+      if (gb.isConnected){
+        gb.style.transition = 'opacity .45s ease-in';
+        gb.style.opacity = '0';
+        setTimeout(() => gb.remove(), 480);
+      }
       if (c._ghostBasin === gb) c._ghostBasin = null;
-    }, 1650);
+    }, 3300);
     if (c.frames){
       showFrame(c, 2, 'scoop');               // 真弯腰：持瓢下探
       c.actName = 'scoop';
@@ -1480,11 +1484,10 @@
                  盆边站着人也不劫持）   点盆 = 走位补水   点地面 = 走位 */
     if (gameOn && player.box.style.display !== 'none'){
       const t = hitTest(x, y);
-      if (t && t !== player){
-        /* 手指碰到玩偶的瞬间 = 附身 + 立刻整套动作：
-           弯腰舀水 → 起身 → 自动洒向最近对手（不再要求按住时长——点到就演）。
-           按住不放时瞄准环跟随手指，滑到谁身上就泼谁 */
-        possess(t);
+      if (t){
+        /* 手指碰到玩偶的瞬间 = 附身（点谁谁听令，包括再点当前玩家自己）+ 立刻整套动作：
+           弯腰舀水 → 起身 → 自动洒向最近对手。按住不放时瞄准环跟随手指，滑到谁身上就泼谁 */
+        if (t !== player) possess(t);
         pressChar = t;
         const aim = nearestRival(player);
         holdFoe = aim;
