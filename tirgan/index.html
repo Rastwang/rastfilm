@@ -516,6 +516,20 @@
   #gate.hide{opacity:0;pointer-events:none}
   #gate .big{font-size:22px;color:#ffd89a;margin-bottom:10px;letter-spacing:1px}
   #gate .sub{font-size:12px;opacity:.6;letter-spacing:2px;text-transform:uppercase;margin-top:14px}
+  /* 开篇赠言：上善若水 · 提尔甘节快乐每一天（双语，语气克制，像题词不像广告） */
+  #gate .gate-verse{
+    margin-top:24px;display:flex;flex-direction:column;gap:7px;
+    max-width:86%;
+  }
+  #gate .gate-verse .gv1{
+    font-size:13px;font-style:italic;line-height:1.75;
+    color:#ecdcc0;opacity:.92;
+  }
+  #gate .gate-verse .gv2{
+    font-size:10.5px;line-height:1.8;letter-spacing:.26em;
+    color:#ffd89a;opacity:.78;
+  }
+  body.lang-fa #gate .gate-verse .gv2{letter-spacing:0}
   #gate .dot{
     width:14px;height:14px;border-radius:50%;background:#ffd89a;margin-top:26px;
     animation:pulse 1.4s ease-in-out infinite;
@@ -727,6 +741,10 @@
     تیرگان مبارک<br>
     <span style="font-size:11px;opacity:.6">Tirgan Water Festival</span>
   </div>
+  <div class="gate-verse" id="gateVerse">
+    <span class="gv1">The highest good is like water.</span>
+    <span class="gv2">Happy Tirgan, every day.</span>
+  </div>
   <div class="dot"></div>
   <div class="sub" id="gateSub">Tap to begin · 3-MIN WATER BATTLE</div>
 </div>
@@ -843,6 +861,7 @@
       time: 'TIME', score: 'SCORE',
       title: 'TIRGAN BATTLE',
       breath: 'Take a breath. Splash again.',
+      verse: ['The highest good is like water.', 'Happy Tirgan, every day.'],
       again: 'PLAY AGAIN',
       pat: 'BACKSTAGE · RAST FILM ↗',
       ranks: ['ROOKIE', 'SQUARE SAILOR', 'SPLASH MASTER', 'WATER GOD'],
@@ -863,6 +882,7 @@
       time: 'زمان', score: 'امتیاز',
       title: 'نبرد تیرگان',
       breath: 'یک نفس بکش. دوباره بپاش.',
+      verse: ['برترین نیکی همچون آب است', 'تیرگان مبارک، هر روز'],
       again: 'دوباره بازی کن',
       pat: 'پشت صحنه · RAST FILM ↗',
       ranks: ['تازه‌کار', 'ملوان میدان', 'استاد آب‌پاشی', 'خدای آب'],
@@ -936,6 +956,13 @@
       if (rtl) el.dir = d.dir;
     };
     set('gateSub', d.sub, true);
+    const gv = document.getElementById('gateVerse');
+    if (gv && d.verse){
+      const a = gv.querySelector('.gv1'), b = gv.querySelector('.gv2');
+      if (a) a.textContent = d.verse[0];
+      if (b) b.textContent = d.verse[1];
+      gv.dir = d.dir;
+    }
     set('lTime', d.time);
     set('lScore', d.score);
     set('rTitle', d.title, true);
