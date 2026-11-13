@@ -1477,14 +1477,22 @@
       // 注意：showFrame 换 src 的瞬间 img 仍是旧帧几何，新图解码完 load 事件后再校正一次。
       const placeGb = () => {
         const fr = c.frame.getBoundingClientRect();
-        if (!fr.width) return false;
+        if (!fr.width) return false;                  // 帧图尚未解码：宽 0
         const lf = (c.dir || 1) < 0 ? 1 - L : L;      // scaleX(-1) 时图内位置左右镜像
         gb.style.left = (fr.left + fr.width * lf) + 'px';
         gb.style.width = Math.max(54, Math.min(140, fr.width * 0.62)) + 'px';
         return true;
       };
-      placeGb();
-      c.frame.addEventListener('load', placeGb, { once: true });
+      if (!placeGb()){                                // 帧图没就绪：load 事件 + 轮询双兜底，就绪立刻校正
+        let n = 0;
+        const tick = () => {
+          if (!gb.isConnected || placeGb()) return;
+          if (++n > 150) return;                      // ~2.5s 放弃
+          requestAnimationFrame(tick);
+        };
+        c.frame.addEventListener('load', placeGb, { once: true });
+        requestAnimationFrame(tick);
+      }
       gb.style.opacity = '0';
       gb.style.transition = 'opacity .16s ease-out';
       document.body.appendChild(gb);
@@ -1921,12 +1929,12 @@
     // z = 深度层级，按脚线(bt%)与三个盆的脚线一起排全序（见上方 BASINS 注释）
     // ladleX = 弯腰帧里瓢碗中心在图内的横向百分比（逐帧实测，临时盆对准它落）
     // ladleBasin = 精灵图自带画好的盆（girl/girl2 的勺已探在盆里，无需临时盆）
-    {src:'assets/boy.png',   fx:0.34, bt:5,  vh:40, sex:'m', fr:'boy',  z:8, ladleX:0.64},
+    {src:'assets/boy.png',   fx:0.34, bt:5,  vh:40, sex:'m', fr:'boy',  z:8, ladleX:0.72},
     {src:'assets/girl.png',  fx:0.89, bt:13, vh:28, sex:'f', fr:'girl', z:6, ladleBasin:true},
-    {src:'assets/boy2.png',  fx:0.34, bt:14, vh:25, sex:'m', fallback:'assets/boy.png',  fr:'boy2',  z:5, ladleX:0.74},
+    {src:'assets/boy2.png',  fx:0.34, bt:14, vh:25, sex:'m', fallback:'assets/boy.png',  fr:'boy2',  z:5, ladleX:0.12},
     {src:'assets/girl2.png', fx:0.63, bt:15, vh:23, sex:'f', fallback:'assets/girl.png', fr:'girl2', z:4, ladleBasin:true},
-    {src:'assets/boy3.png',  fx:0.50, bt:21, vh:18, sex:'m', fallback:'assets/boy.png',  fr:'boy3',  z:1, ladleX:0.80},
-    {src:'assets/girl3.png', fx:0.44, bt:20, vh:19, sex:'f', fallback:'assets/girl.png', fr:'girl3', z:2, ladleX:0.70}
+    {src:'assets/boy3.png',  fx:0.50, bt:21, vh:18, sex:'m', fallback:'assets/boy.png',  fr:'boy3',  z:1, ladleX:0.83},
+    {src:'assets/girl3.png', fx:0.44, bt:20, vh:19, sex:'f', fallback:'assets/girl.png', fr:'girl3', z:2, ladleX:0.85}
   ];
   const CHARS = [];
 
