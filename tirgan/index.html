@@ -1406,15 +1406,87 @@
     sfx(c.def.sex === 'f' ? 'tirgan_f' : 'tirgan_m', 0.8);
   }
 
+  /* ================= 当场舀水：按住玩偶的原地整套动作 =================
+     玩家按住玩偶时不必走到盆边——原地弯腰舀一瓢（提尔甘广场到处是水花），
+     起身后按 queuedFoe 自动走过去洒向对手。掌控感优先：动作立刻发生。 */
+  function spotScoop(c){
+    stopAct(c);
+    c.state = 'scoop';
+    if (c.frames){
+      showFrame(c, 2, 'scoop');               // 真弯腰：持瓢下探
+      c.actName = 'scoop';
+    } else {
+      play(c, 'scoop', 1400);
+      c.actName = 'scoop';
+      triggerLadle(c, 1250);                  // 水瓢伸下去舀
+    }
+    const r = c.box.getBoundingClientRect();
+    spawnScoop(r.left + r.width/2, r.bottom - r.height*0.12, c);   // 脚边一捧水升起
+    setTimeout(() => {
+      if (!started || c.state !== 'scoop') return;
+      if (c.frames) showFrame(c, 3, 'lift');  // 起身端水
+    }, 850);
+    setTimeout(() => {                        // 蹲到盆边：水入瓢→入弹药
+      if (!started || !gameOn || c.state !== 'scoop'){ c.state = 'idle'; return; }
+      if (c.isPlayer){
+        if (ammo < 5){
+          ammo++; updateHud();
+          if (ammo === 5){ bigText(T().full); say('full'); }
+        }
+        const qf = c.queuedFoe; c.queuedFoe = null;
+        if (qf && qf.box && qf.box.style.display !== 'none'){
+          // 洒水：射程内当场泼；不够近走过去，到位自动泼（updateChars 的 autoFoe 机制）
+          c.state = 'walk';
+          c.targetBt = null;
+          c.autoFoe = qf;
+          c.targetX = nudgeOffBasin(clampX(qf.x + (qf.x >= c.x ? -1 : 1) * innerWidth * 0.30, c), c);
+        } else {
+          c.state = 'idle';
+          c.until = performance.now() + 100000000;
+        }
+        return;
+      }
+      throwWater(c);
+      c.state = 'idle';
+      c.until = performance.now() + 1500 + Math.random()*2600;
+    }, 1450);
+  }
+
   function onDown(x, y){
     if (!started) start();
     drawing = true;
     px = x; py = y; pt = performance.now();
 
-    /* ---- 水仗模式：玩家的三种指令（优先于手指划水） ----
-       手势分工：点盆 = 舀水（优先级最高，盆边站着人也不劫持点击）
-                 点玩偶 = 附身控制它   按住玩偶 = 附身 + 弯腰舀水 + 洒水一整套 */
+    /* ---- 水仗模式：玩家的指令（优先于手指划水） ----
+       手势分工：点玩偶 = 立刻附身（玩偶优先——盆边站着人也不劫持，
+                 附身自带即时反馈且按住有整套动作，不会"站着没反应"）
+                 按住玩偶 = 弯腰舀水 + 洒水一整套   点盆/点地面 = 走位补水 */
     if (gameOn && player.box.style.display !== 'none'){
+      const t = hitTest(x, y);
+      if (t && t !== player){
+        /* 手指碰到玩偶的瞬间就附身——零延迟，"点住谁，谁就是你的"（掌控感第一拍） */
+        possess(t);
+        pressChar = t;
+        clearTimeout(pressTimer);
+        pressTimer = setTimeout(() => {
+          if (pressChar !== t) return;      // 已松手 → 只是点一下，附身已完成
+          pressChar = null;
+          /* 按住玩偶 ≥230ms = 当场弯腰舀水 → 起身 → 自动洒向最近对手（完整一整套）。
+             目标=离玩家最近的对手；按住期间手指移到谁身上，环就套住谁、就泼谁 */
+          const aim = nearestRival(player);
+          holdFoe = aim;
+          player.queuedFoe = aim;
+          player.autoFoe = null;
+          // 正在弯腰舀水：不打断，舀完自动泼向目标；正奔赴盆（明确点过盆）：继续，舀完自动泼
+          if (player.state === 'scoop' || player.state === 'toBasin') return;
+          if (aim){
+            player.dir = aim.x >= player.x ? 1 : -1;
+            moveChar(player);
+          }
+          spotScoop(player);                // 原地弯腰舀水——动作立刻发生
+        }, 230);
+        return;
+      }
       for (const b of BASINS){
         const r = b.getBoundingClientRect();
         if (x >= r.left - 12 && x <= r.right + 12 && y >= r.top - 12 && y <= r.bottom + 12){
@@ -1428,53 +1500,6 @@
           player.targetX = clampX(bx + (player.x <= bx ? -1 : 1) * r.width * 0.12, player);
           return;
         }
-      }
-      const t = hitTest(x, y);
-      if (t && t !== player){
-        /* 手指碰到玩偶的瞬间就附身——零延迟，"点住谁，谁就是你的"（掌控感第一拍） */
-        possess(t);
-        pressChar = t;
-        clearTimeout(pressTimer);
-        pressTimer = setTimeout(() => {
-          if (pressChar !== t) return;      // 已松手 → 只是点一下，附身已完成
-          pressChar = null;
-          /* 按住不放 ≥230ms：舀水洒水一整套。目标=离玩家最近的对手；
-             按住期间手指移到谁身上，环就套住谁 */
-          const aim = nearestRival(player);
-          holdFoe = aim;
-          if (ammo > 0){
-            player.queuedFoe = null; player.autoFoe = null;
-            // 正在弯腰舀水：不打断，舀完自动泼向目标；其余状态原地站定进入瞄准
-            if (player.state === 'scoop'){
-              player.queuedFoe = aim;
-            } else {
-              if (player.state === 'toBasin' && player.basin && player.basin._owner === player) player.basin._owner = null;
-              stopAct(player);
-              player.state = 'idle';
-              player.until = performance.now() + 100000000;
-              if (aim){
-                player.dir = aim.x >= player.x ? 1 : -1;
-                moveChar(player);
-                play(player, 'lunge', 520);   // 举瓢备战：松手就泼，有即时反馈
-              }
-            }
-            return;
-          }
-          if (!aim) return;
-          bigText(T().dry); say('dry');
-          player.queuedFoe = aim;              // 舀完水自动走过去泼他
-          if (player.state === 'scoop' || player.state === 'toBasin') return;  // 已在舀水/已奔赴盆：舀完自动泼
-          const nb = bestBasinFor(player);
-          if (nb){
-            const br = nb.getBoundingClientRect();
-            player.basin = nb; player.duelFoe = null;
-            nb._owner = player;               // 玩家优先：出发即占用
-            player.state = 'toBasin';
-            player.targetBt = parseFloat(nb.style.bottom);
-            player.targetX = clampX(br.left + br.width/2 + (player.x <= br.left + br.width/2 ? -1 : 1) * br.width * 0.12, player);
-          }
-        }, 230);
-        return;
       }
       player.duelFoe = null;
       player.queuedFoe = null; player.autoFoe = null;
@@ -1603,6 +1628,11 @@
       const t = holdFoe;
       holdFoe = null;
       if (gameOn && t && t.box && t.box.style.display !== 'none'){
+        /* 正在弯腰舀水/奔赴盆：整套动作会自动洒向目标，松手不抢先泼 */
+        if (player.state === 'scoop' || player.state === 'toBasin'){
+          pressChar = null;
+          return;
+        }
         if (ammo > 0 && Math.abs(t.x - player.x) < innerWidth * 0.42){
           ammo--; updateHud();
           player.duelFoe = null; player.autoFoe = null; player.queuedFoe = null;
@@ -2311,6 +2341,7 @@
             c.autoFoe = null;
             c.state = 'idle';
             ammo--; updateHud();
+            holdFoe = null;               // 整套动作的洒水完成：清锁定环，松手不再重复泼
             throwWater(c, 0, f);
           }
         }
