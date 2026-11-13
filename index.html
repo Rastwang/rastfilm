@@ -1452,15 +1452,17 @@
   function spotScoop(c){
     stopAct(c);
     c.state = 'scoop';
-    /* 临时水盆：当场舀水也要有盆——脚边（面朝一侧）淡入一个小陶盆，舀完淡出 */
+    /* 临时水盆：当场舀水也要有盆——脚边淡入一个小陶盆，舀完淡出。
+       盆心对准精灵图里瓢头的位置（弯腰姿势瓢在身前 ~0.20 身宽、近地面，
+       盆心放 0.30 身宽处 + z 高一级 → 瓢头探进水面，盆前沿盖住瓢头 = "舀进盆里"） */
     if (c._ghostBasin) c._ghostBasin.remove();      // 连续点按：先收走上一只
     const gr = c.box.getBoundingClientRect();
     const gb = document.createElement('div');
     gb.className = 'basin';
     gb.innerHTML = svgBasin;
-    gb.style.left = (c.x + (c.dir || 1) * gr.width * 0.52) + 'px';
+    gb.style.left = (c.x + (c.dir || 1) * gr.width * 0.30) + 'px';
     gb.style.bottom = (curBt(c)) + '%';             // 与脚线齐平：弯腰正对盆
-    gb.style.width = Math.max(52, Math.min(140, gr.width * 0.62)) + 'px';
+    gb.style.width = Math.max(58, Math.min(140, gr.width * 0.66)) + 'px';
     gb.style.zIndex = Math.min(12, (parseInt(c.box.style.zIndex, 10) || 4) + 1);  // 盆在身前：前沿盖住前脚
     gb.style.opacity = '0';
     gb.style.transition = 'opacity .16s ease-out';
