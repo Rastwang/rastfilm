@@ -1452,31 +1452,7 @@
   function spotScoop(c){
     stopAct(c);
     c.state = 'scoop';
-    /* 临时水盆：当场舀水也要有盆——脚边淡入一个小陶盆，舀完淡出。
-       盆心对准精灵图里瓢头的位置（弯腰姿势瓢在身前 ~0.20 身宽、近地面，
-       盆心放 0.30 身宽处 + z 高一级 → 瓢头探进水面，盆前沿盖住瓢头 = "舀进盆里"） */
-    if (c._ghostBasin) c._ghostBasin.remove();      // 连续点按：先收走上一只
-    const gr = c.box.getBoundingClientRect();
-    const gb = document.createElement('div');
-    gb.className = 'basin';
-    gb.innerHTML = svgBasin;
-    gb.style.left = (c.x + (c.dir || 1) * gr.width * 0.30) + 'px';
-    gb.style.bottom = (curBt(c)) + '%';             // 与脚线齐平：弯腰正对盆
-    gb.style.width = Math.max(58, Math.min(140, gr.width * 0.66)) + 'px';
-    gb.style.zIndex = Math.min(12, (parseInt(c.box.style.zIndex, 10) || 4) + 1);  // 盆在身前：前沿盖住前脚
-    gb.style.opacity = '0';
-    gb.style.transition = 'opacity .16s ease-out';
-    document.body.appendChild(gb);
-    requestAnimationFrame(() => { gb.style.opacity = '1'; });
-    c._ghostBasin = gb;
-    setTimeout(() => {                              // 舀完+泼水过后：盆慢慢淡出（多留一会儿，看得清）
-      if (gb.isConnected){
-        gb.style.transition = 'opacity .45s ease-in';
-        gb.style.opacity = '0';
-        setTimeout(() => gb.remove(), 480);
-      }
-      if (c._ghostBasin === gb) c._ghostBasin = null;
-    }, 3300);
+    /* 先切弯腰帧：临时盆要按这一帧里瓢头的实际位置落点（每个角色姿势都不一样） */
     if (c.frames){
       showFrame(c, 2, 'scoop');               // 真弯腰：持瓢下探
       c.actName = 'scoop';
@@ -1484,6 +1460,44 @@
       play(c, 'scoop', 1400);
       c.actName = 'scoop';
       triggerLadle(c, 1250);                  // 水瓢伸下去舀
+    }
+    /* 临时水盆：当场舀水也要有盆——脚边淡入一个小陶盆，舀完淡出。
+       瓢是画在精灵图里的，且六个角色的瓢头位置各不相同（0.64~0.80 图宽，
+       girl/girl2 甚至自带画好的盆），所以逐角色配置 ladleX、按当前朝向镜像，
+       盆心 = 瓢碗正下方；盆 z 高一级 → 前沿盖住瓢头下端 = "探进水里"。 */
+    if (!c.def.ladleBasin){
+      if (c._ghostBasin) c._ghostBasin.remove();      // 连续点按：先收走上一只
+      const L = c.def.ladleX || 0.64;
+      const gb = document.createElement('div');
+      gb.className = 'basin';
+      gb.innerHTML = svgBasin;
+      gb.style.bottom = (curBt(c)) + '%';             // 与脚线齐平：弯腰正对盆
+      gb.style.zIndex = Math.min(12, (parseInt(c.box.style.zIndex, 10) || 4) + 1);  // 盆在身前：前沿盖住前脚
+      // 落点 = 弯腰帧里瓢碗的实际渲染位置（按当前朝向镜像）。
+      // 注意：showFrame 换 src 的瞬间 img 仍是旧帧几何，新图解码完 load 事件后再校正一次。
+      const placeGb = () => {
+        const fr = c.frame.getBoundingClientRect();
+        if (!fr.width) return false;
+        const lf = (c.dir || 1) < 0 ? 1 - L : L;      // scaleX(-1) 时图内位置左右镜像
+        gb.style.left = (fr.left + fr.width * lf) + 'px';
+        gb.style.width = Math.max(54, Math.min(140, fr.width * 0.62)) + 'px';
+        return true;
+      };
+      placeGb();
+      c.frame.addEventListener('load', placeGb, { once: true });
+      gb.style.opacity = '0';
+      gb.style.transition = 'opacity .16s ease-out';
+      document.body.appendChild(gb);
+      requestAnimationFrame(() => { gb.style.opacity = '1'; });
+      c._ghostBasin = gb;
+      setTimeout(() => {                              // 舀完+泼水过后：盆慢慢淡出（多留一会儿，看得清）
+        if (gb.isConnected){
+          gb.style.transition = 'opacity .45s ease-in';
+          gb.style.opacity = '0';
+          setTimeout(() => gb.remove(), 480);
+        }
+        if (c._ghostBasin === gb) c._ghostBasin = null;
+      }, 3300);
     }
     const r = c.box.getBoundingClientRect();
     spawnScoop(r.left + r.width/2, r.bottom - r.height*0.12, c);   // 脚边一捧水升起
@@ -1905,12 +1919,14 @@
   // fallback：图还没做出来时，用已有角色 + 人群滤镜顶上，页面不会出现破图
   const CHAR_DEFS = [
     // z = 深度层级，按脚线(bt%)与三个盆的脚线一起排全序（见上方 BASINS 注释）
-    {src:'assets/boy.png',   fx:0.34, bt:5,  vh:40, sex:'m', fr:'boy',  z:8},
-    {src:'assets/girl.png',  fx:0.89, bt:13, vh:28, sex:'f', fr:'girl', z:6},
-    {src:'assets/boy2.png',  fx:0.34, bt:14, vh:25, sex:'m', fallback:'assets/boy.png',  fr:'boy2',  z:5},
-    {src:'assets/girl2.png', fx:0.63, bt:15, vh:23, sex:'f', fallback:'assets/girl.png', fr:'girl2', z:4},
-    {src:'assets/boy3.png',  fx:0.50, bt:21, vh:18, sex:'m', fallback:'assets/boy.png',  fr:'boy3',  z:1},
-    {src:'assets/girl3.png', fx:0.44, bt:20, vh:19, sex:'f', fallback:'assets/girl.png', fr:'girl3', z:2}
+    // ladleX = 弯腰帧里瓢碗中心在图内的横向百分比（逐帧实测，临时盆对准它落）
+    // ladleBasin = 精灵图自带画好的盆（girl/girl2 的勺已探在盆里，无需临时盆）
+    {src:'assets/boy.png',   fx:0.34, bt:5,  vh:40, sex:'m', fr:'boy',  z:8, ladleX:0.64},
+    {src:'assets/girl.png',  fx:0.89, bt:13, vh:28, sex:'f', fr:'girl', z:6, ladleBasin:true},
+    {src:'assets/boy2.png',  fx:0.34, bt:14, vh:25, sex:'m', fallback:'assets/boy.png',  fr:'boy2',  z:5, ladleX:0.74},
+    {src:'assets/girl2.png', fx:0.63, bt:15, vh:23, sex:'f', fallback:'assets/girl.png', fr:'girl2', z:4, ladleBasin:true},
+    {src:'assets/boy3.png',  fx:0.50, bt:21, vh:18, sex:'m', fallback:'assets/boy.png',  fr:'boy3',  z:1, ladleX:0.80},
+    {src:'assets/girl3.png', fx:0.44, bt:20, vh:19, sex:'f', fallback:'assets/girl.png', fr:'girl3', z:2, ladleX:0.70}
   ];
   const CHARS = [];
 
@@ -2051,6 +2067,7 @@
              ammo: ammo, gameOn: gameOn };
   };
   window.__dbg.freeze = function(ms){ npcFreeze = ms; };   // 测试钩子：定格/解冻（测附身与冻结用）
+  window.__dbg.scoop = function(i){ spotScoop(CHARS[i] || player); };  // 测试钩子：指定角色当场舀水
   let score = 0, combo = 0, comboT = 0, ammo = 5;
   let freezeMs = 0;                     // hit-stop 剩余定格时间
   let npcFreeze = 0;                    // 附身定格：附身瞬间其他玩偶暂停走动/舀水（呼吸摇摆不受影响）
