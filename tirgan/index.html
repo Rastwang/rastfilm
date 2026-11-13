@@ -649,6 +649,20 @@
   @keyframes ringPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.13)}}
   body.you-on #youTag,body.you-on #youRing{opacity:1}
 
+  /* 按住目标锁定环：按住某个角色时，其脚下出现水色锁定环（松手泼出的"瞄准镜"） */
+  #foeRing{
+    position:absolute;z-index:11;left:0;top:0;pointer-events:none;
+    width:70px;height:24px;opacity:0;transition:opacity .18s;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    border:2.5px dashed rgba(120,205,255,.95);
+    background:radial-gradient(ellipse at center,rgba(120,205,255,.30) 0%,rgba(120,205,255,.10) 55%,transparent 75%);
+    box-shadow:0 0 14px rgba(120,205,255,.45);
+    animation:foePulse 1.1s ease-in-out infinite;
+  }
+  @keyframes foePulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.18)}}
+  body.foe-hold #foeRing{opacity:1}
+
   /* 点击落点涟漪：金色圆环扩散，确认"指令已收到" */
   .tapmark{
     position:absolute;z-index:12;left:0;top:0;width:30px;height:30px;
@@ -705,7 +719,7 @@
   <button type="button" data-l="en">EN</button><button type="button" data-l="fa">فارسی</button>
 </div>
 
-<div class="hint" id="hint"><b>Tap ground to move · Tap basin to scoop · Tap rival to splash</b> — 3-min water battle</div>
+<div class="hint" id="hint"><b>Tap ground to move · Hold a rival to soak them</b> — 3-min water battle</div>
 
 <div id="gate">
   <div class="big">آب‌پاشی</div>
@@ -824,7 +838,7 @@
   const I18N = {
     en: {
       dir: 'ltr',
-      hint: '<b>Tap ground to move · Tap basin to scoop · Tap rival to splash</b> — 3-min water battle',
+      hint: '<b>Tap ground to move · Hold a rival to soak them</b> — 3-min water battle',
       sub: 'Tap to begin · 3-MIN WATER BATTLE',
       time: 'TIME', score: 'SCORE',
       title: 'TIRGAN BATTLE',
@@ -844,7 +858,7 @@
     },
     fa: {
       dir: 'rtl',
-      hint: '<b>برای حرکت زمین را لمس کن · برای آب گرفتن تشت را لمس کن · برای پاشیدن حریف را لمس کن</b> — نبرد آبی ۳ دقیقه‌ای',
+      hint: '<b>برای حرکت زمین را لمس کن · حریف را نگه دار و رها کن تا خیسش کنی</b> — نبرد آبی ۳ دقیقه‌ای',
       sub: 'برای شروع لمس کن · نبرد آبی ۳ دقیقه‌ای',
       time: 'زمان', score: 'امتیاز',
       title: 'نبرد تیرگان',
@@ -1331,6 +1345,9 @@
     return best;
   }
 
+  /* 按住手势状态：按住某个角色 = 锁定目标，松手即泼（hold-to-splash） */
+  let holdFoe = null;
+
   function onDown(x, y){
     if (!started) start();
     drawing = true;
@@ -1340,29 +1357,37 @@
     if (gameOn && player.box.style.display !== 'none'){
       const t = hitTest(x, y);
       if (t && t !== player){
-        const dx = Math.abs(t.x - player.x);
-        if (ammo <= 0){
-          bigText(T().dry); say('dry');
-          const nb = bestBasinFor(player);
-          if (nb){
-            const br = nb.getBoundingClientRect();
-            player.basin = nb; player.duelFoe = null;
-            nb._owner = player;               // 玩家优先：出发即占用
-            player.state = 'toBasin';
-            player.targetX = clampX(br.left + br.width/2 + (player.x <= br.left + br.width/2 ? -1 : 1) * br.width * 0.12, player);
+        /* 按住一个人 = 锁定目标：脚下出水色锁定环；松手时泼出（onUp）。
+           没水则先去舀水，并把目标记为"舀完自动去泼"。 */
+        holdFoe = t;
+        if (ammo > 0){
+          player.queuedFoe = null; player.autoFoe = null;
+          // 正在走向盆：中断，释放盆占用；正在弯腰舀水：不打断，舀完自动泼这个目标
+          if (player.state === 'toBasin'){
+            if (player.basin && player.basin._owner === player) player.basin._owner = null;
+            stopAct(player);
+            player.state = 'idle';
+            player.until = performance.now() + 100000000;
+          } else if (player.state !== 'scoop'){
+            stopAct(player);
+            player.state = 'idle';
+            player.until = performance.now() + 100000000;
+          } else {
+            player.queuedFoe = t;
           }
+          player.dir = t.x >= player.x ? 1 : -1;
+          moveChar(player);
           return;
         }
-        if (dx < innerWidth * 0.42){
-          ammo--; updateHud();
-          player.duelFoe = null;
-          player.state = 'idle';
-          throwWater(player, 0, t);      // 瞄准泼出（soak 里计分）
-        } else {
-          player.duelFoe = null;
-          player.state = 'walk';         // 走近目标再泼
-          tapMark(x, y);
-          player.targetX = nudgeOffBasin(clampX(t.x + (t.x >= player.x ? -1 : 1) * innerWidth * 0.30, player), player);
+        bigText(T().dry); say('dry');
+        player.queuedFoe = t;              // 舀完水自动走过去泼他
+        const nb = bestBasinFor(player);
+        if (nb){
+          const br = nb.getBoundingClientRect();
+          player.basin = nb; player.duelFoe = null;
+          nb._owner = player;               // 玩家优先：出发即占用
+          player.state = 'toBasin';
+          player.targetX = clampX(br.left + br.width/2 + (player.x <= br.left + br.width/2 ? -1 : 1) * br.width * 0.12, player);
         }
         return;
       }
@@ -1371,6 +1396,7 @@
         if (x >= r.left - 12 && x <= r.right + 12 && y >= r.top - 12 && y <= r.bottom + 12){
           const bx = r.left + r.width/2;
           player.basin = b; player.duelFoe = null;
+          player.queuedFoe = null; player.autoFoe = null;
           b._owner = player;                    // 出发即占用
           player.state = 'toBasin';
           tapMark(x, y);
@@ -1379,6 +1405,7 @@
         }
       }
       player.duelFoe = null;
+      player.queuedFoe = null; player.autoFoe = null;
       player.state = 'walk';             // 点地面 → 跑过去
       tapMark(x, y);
       player.targetX = nudgeOffBasin(clampX(x, player), player);
@@ -1485,7 +1512,33 @@
     }
   }
 
-  function onUp(){ drawing = false; }
+  function onUp(){
+    drawing = false;
+    /* 按住-松手手势：松手的一刻把瓢里的水泼向锁定的目标 */
+    if (holdFoe){
+      const t = holdFoe;
+      holdFoe = null;
+      if (gameOn && t && t.box && t.box.style.display !== 'none'){
+        if (ammo > 0 && Math.abs(t.x - player.x) < innerWidth * 0.42){
+          ammo--; updateHud();
+          player.duelFoe = null; player.autoFoe = null; player.queuedFoe = null;
+          player.state = 'idle';
+          throwWater(player, 0, t);       // 松手即泼（soak 里计分）
+          return;
+        }
+        if (ammo > 0){
+          // 不够近：自己走过去，到位自动泼
+          player.duelFoe = null;
+          player.queuedFoe = null;
+          player.state = 'walk';
+          player.autoFoe = t;
+          player.targetX = nudgeOffBasin(clampX(t.x + (t.x >= player.x ? -1 : 1) * innerWidth * 0.30, player), player);
+          return;
+        }
+        /* 没水：onDown 已安排去舀水（queuedFoe 接管），舀完自动走过去泼 */
+      }
+    }
+  }
 
   cv.style.pointerEvents = 'none';
   // 事件兼容：支持 PointerEvent 的环境用 pointer*；否则退回 touch/mouse
@@ -1826,6 +1879,9 @@
     gameOn = false;
     clearInterval(gameTmr);
     bEl.classList.remove('on');
+    holdFoe = null;
+    document.body.classList.remove('foe-hold');
+    player.queuedFoe = null; player.autoFoe = null;
     stopAct(player);
     player.duelFoe = null;
     player.state = 'idle';
@@ -1853,7 +1909,10 @@
   youTag.innerHTML = '<span class="pill">YOU</span><s class="arr"></s>';
   const youRing = document.createElement('div');
   youRing.id = 'youRing';
+  const foeRing = document.createElement('div');
+  foeRing.id = 'foeRing';
   document.body.appendChild(youRing);
+  document.body.appendChild(foeRing);
   document.body.appendChild(youTag);
   function updateYouMark(){
     if (!started || !gameOn || player.box.style.display === 'none'){
@@ -1869,6 +1928,17 @@
     youRing.style.left = cx + 'px';
     youRing.style.top  = (r.bottom - 3) + 'px';
     youRing.style.width = Math.max(62, r.width * 0.94) + 'px';
+
+    /* 按住目标锁定环：跟随被按住的角色 */
+    if (holdFoe && holdFoe.box.style.display !== 'none'){
+      document.body.classList.add('foe-hold');
+      const fr = holdFoe.box.getBoundingClientRect();
+      foeRing.style.left = (fr.left + fr.width/2) + 'px';
+      foeRing.style.top  = (fr.bottom - 3) + 'px';
+      foeRing.style.width = Math.max(56, fr.width * 0.92) + 'px';
+    } else {
+      document.body.classList.remove('foe-hold');
+    }
   }
 
   /* 点击落点涟漪：金色圆环在指尖扩散，确认"指令已收到" */
@@ -2065,6 +2135,18 @@
         }
         c.u = uOf(c.x);
         moveChar(c);
+        /* 玩家"走过去自动泼"：按住松手时目标太远，走到射程内立刻泼出 */
+        if (c.isPlayer && c.autoFoe){
+          const f = c.autoFoe;
+          if (!gameOn || f.box.style.display === 'none'){
+            c.autoFoe = null;
+          } else if (Math.abs(f.x - c.x) < innerWidth * 0.42){
+            c.autoFoe = null;
+            c.state = 'idle';
+            ammo--; updateHud();
+            throwWater(c, 0, f);
+          }
+        }
         // 每一步在脚底扬一小撮土
         c.dustT = (c.dustT || 0) - dtms;
         if (c.dustT <= 0){
@@ -2140,8 +2222,16 @@
             ammo++; updateHud();
             if (ammo === 5){ bigText(T().full); say('full'); }
           }
-          c.state = 'idle';
-          c.until = performance.now() + 100000000;
+          const qf = c.queuedFoe; c.queuedFoe = null;
+          if (qf && qf.box.style.display !== 'none' && holdFoe !== qf){
+            // 按住目标时没水 → 来舀水；水到手时人已松手 → 自动走过去泼
+            c.state = 'walk';
+            c.autoFoe = qf;
+            c.targetX = nudgeOffBasin(clampX(qf.x + (qf.x >= c.x ? -1 : 1) * innerWidth * 0.30, c), c);
+          } else {
+            c.state = 'idle';
+            c.until = performance.now() + 100000000;
+          }
           return;
         }
         throwWater(c);
