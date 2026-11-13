@@ -719,7 +719,7 @@
   <button type="button" data-l="en">EN</button><button type="button" data-l="fa">فارسی</button>
 </div>
 
-<div class="hint" id="hint"><b>Tap a doll to control it · Hold a rival to soak them</b> — 3-min water battle</div>
+<div class="hint" id="hint"><b>Tap a doll to control it · Hold it to scoop & splash</b> — 3-min water battle</div>
 
 <div id="gate">
   <div class="big">آب‌پاشی</div>
@@ -838,7 +838,7 @@
   const I18N = {
     en: {
       dir: 'ltr',
-      hint: '<b>Tap a doll to control it · Hold a rival to soak them</b> — 3-min water battle',
+      hint: '<b>Tap a doll to control it · Hold it to scoop & splash</b> — 3-min water battle',
       sub: 'Tap to begin · 3-MIN WATER BATTLE',
       time: 'TIME', score: 'SCORE',
       title: 'TIRGAN BATTLE',
@@ -858,7 +858,7 @@
     },
     fa: {
       dir: 'rtl',
-      hint: '<b>برای کنترل عروسک، روی آن بزن · حریف را نگه دار تا خیسش کنی</b> — نبرد آبی ۳ دقیقه‌ای',
+      hint: '<b>برای کنترل عروسک، روی آن بزن · عروسک را نگه دار تا آب بگیرد و بپاشد</b> — نبرد آبی ۳ دقیقه‌ای',
       sub: 'برای شروع لمس کن · نبرد آبی ۳ دقیقه‌ای',
       time: 'زمان', score: 'امتیاز',
       title: 'نبرد تیرگان',
@@ -1345,10 +1345,21 @@
     return best;
   }
 
-  /* 按住手势状态：按住某个角色 = 锁定目标，松手即泼（hold-to-splash） */
+  /* 最近的对手：按住玩偶后的自动瞄准目标（玩家自己除外；纵深差加大权重，优先泼同一排的） */
+  function nearestRival(c){
+    let best = null, bd = 1e9;
+    for (const o of CHARS){
+      if (o === c || o.box.style.display === 'none') continue;
+      const d = Math.abs(o.x - c.x) + Math.abs((o.by || 0) - (c.by || 0)) * 6;
+      if (d < bd){ bd = d; best = o; }
+    }
+    return best;
+  }
+
+  /* 按住手势状态：按住玩偶 = 附身 + 自动瞄准最近对手（松手即泼） */
   let holdFoe = null;
   /* 点/按玩偶的二合一手势状态：
-     快速点一下(<230ms) = 附身控制它；按住不放(≥230ms) = 锁定瞄准，松手泼出 */
+     快速点一下(<230ms) = 附身控制它；按住不放(≥230ms) = 附身它 + 舀水洒水一整套 */
   let pressChar = null, pressTimer = 0;
 
   /* ================= 附身切换：点一下任意玩偶 = 控制它 =================
@@ -1397,52 +1408,10 @@
     drawing = true;
     px = x; py = y; pt = performance.now();
 
-    /* ---- 水仗模式：玩家的三种指令（优先于手指划水） ---- */
+    /* ---- 水仗模式：玩家的三种指令（优先于手指划水） ----
+       手势分工：点盆 = 舀水（优先级最高，盆边站着人也不劫持点击）
+                 点玩偶 = 附身控制它   按住玩偶 = 附身 + 弯腰舀水 + 洒水一整套 */
     if (gameOn && player.box.style.display !== 'none'){
-      const t = hitTest(x, y);
-      if (t && t !== player){
-        /* 点玩偶二合一手势：
-           - 快速点一下（<230ms松手）= 附身控制它：YOU 徽标跳过去，没水时它立刻去舀水
-           - 按住不放（≥230ms）= 锁定目标：脚下水色锁定环，松手把水泼向它 */
-        pressChar = t;
-        clearTimeout(pressTimer);
-        pressTimer = setTimeout(() => {
-          if (pressChar !== t) return;      // 已在230ms内松手 → 是"点一下"，走附身
-          pressChar = null;
-          holdFoe = t;                       // 转入按住瞄准
-          if (ammo > 0){
-            player.queuedFoe = null; player.autoFoe = null;
-            // 正在走向盆：中断，释放盆占用；正在弯腰舀水：不打断，舀完自动泼这个目标
-            if (player.state === 'toBasin'){
-              if (player.basin && player.basin._owner === player) player.basin._owner = null;
-              stopAct(player);
-              player.state = 'idle';
-              player.until = performance.now() + 100000000;
-            } else if (player.state !== 'scoop'){
-              stopAct(player);
-              player.state = 'idle';
-              player.until = performance.now() + 100000000;
-            } else {
-              player.queuedFoe = t;
-            }
-            player.dir = t.x >= player.x ? 1 : -1;
-            moveChar(player);
-            return;
-          }
-          bigText(T().dry); say('dry');
-          player.queuedFoe = t;              // 舀完水自动走过去泼他
-          const nb = bestBasinFor(player);
-          if (nb){
-            const br = nb.getBoundingClientRect();
-            player.basin = nb; player.duelFoe = null;
-            nb._owner = player;               // 玩家优先：出发即占用
-            player.state = 'toBasin';
-            player.targetBt = parseFloat(nb.style.bottom);
-            player.targetX = clampX(br.left + br.width/2 + (player.x <= br.left + br.width/2 ? -1 : 1) * br.width * 0.12, player);
-          }
-        }, 230);
-        return;
-      }
       for (const b of BASINS){
         const r = b.getBoundingClientRect();
         if (x >= r.left - 12 && x <= r.right + 12 && y >= r.top - 12 && y <= r.bottom + 12){
@@ -1456,6 +1425,51 @@
           player.targetX = clampX(bx + (player.x <= bx ? -1 : 1) * r.width * 0.12, player);
           return;
         }
+      }
+      const t = hitTest(x, y);
+      if (t && t !== player){
+        /* 点玩偶二合一手势：
+           - 快速点一下（<230ms松手）= 附身控制它：YOU 徽标跳过去，没水时它立刻去舀水
+           - 按住不放（≥230ms）= 附身它 + 弯腰舀水 + 洒水一整套（瞄准环自动套住最近对手） */
+        pressChar = t;
+        clearTimeout(pressTimer);
+        pressTimer = setTimeout(() => {
+          if (pressChar !== t) return;      // 已在230ms内松手 → 是"点一下"，走附身
+          pressChar = null;
+          /* 按住玩偶 = 附身它：手指按住谁，弯腰舀水、洒水的就是谁（掌控感核心） */
+          if (t !== player) possess(t);
+          /* 自动瞄准：离玩家最近的对手；按住期间手指移到谁身上，环就套住谁 */
+          const aim = nearestRival(player);
+          holdFoe = aim;
+          if (ammo > 0){
+            player.queuedFoe = null; player.autoFoe = null;
+            // 正在弯腰舀水：不打断，舀完自动泼向目标；其余状态原地站定进入瞄准
+            if (player.state === 'scoop'){
+              player.queuedFoe = aim;
+            } else {
+              if (player.state === 'toBasin' && player.basin && player.basin._owner === player) player.basin._owner = null;
+              stopAct(player);
+              player.state = 'idle';
+              player.until = performance.now() + 100000000;
+              if (aim){ player.dir = aim.x >= player.x ? 1 : -1; moveChar(player); }
+            }
+            return;
+          }
+          if (!aim) return;
+          bigText(T().dry); say('dry');
+          player.queuedFoe = aim;              // 舀完水自动走过去泼他
+          if (player.state === 'scoop' || player.state === 'toBasin') return;  // 已在舀水/已奔赴盆：舀完自动泼
+          const nb = bestBasinFor(player);
+          if (nb){
+            const br = nb.getBoundingClientRect();
+            player.basin = nb; player.duelFoe = null;
+            nb._owner = player;               // 玩家优先：出发即占用
+            player.state = 'toBasin';
+            player.targetBt = parseFloat(nb.style.bottom);
+            player.targetX = clampX(br.left + br.width/2 + (player.x <= br.left + br.width/2 ? -1 : 1) * br.width * 0.12, player);
+          }
+        }, 230);
+        return;
       }
       player.duelFoe = null;
       player.queuedFoe = null; player.autoFoe = null;
@@ -1479,6 +1493,16 @@
 
   function onMove(x, y){
     if (!drawing) return;
+    /* 按住瞄准：手指移到哪个对手身上，锁定环就跟着套住谁（松手即泼谁） */
+    if (holdFoe && gameOn && player.box && player.box.style.display !== 'none'){
+      const aimC = hitTest(x, y);
+      if (aimC && aimC !== player && aimC !== holdFoe){
+        holdFoe = aimC;
+        if (player.queuedFoe) player.queuedFoe = aimC;   // 舀水路上改了主意：目标跟着换
+        player.dir = aimC.x >= player.x ? 1 : -1;
+        moveChar(player);
+      }
+    }
     const now = performance.now();
     const dt = Math.max(8, now - pt);
     const dx = x - px, dy = y - py;
@@ -1944,7 +1968,10 @@
   window.__dbg = function(){            // 验证脚本探针（无副作用）
     return { idx: CHARS.indexOf(player), by: Math.round(curBt(player)*10)/10,
              z: player.box.style.zIndex, x: Math.round(player.x),
-             speed: Math.round(player.speed), state: player.state };
+             speed: Math.round(player.speed), state: player.state,
+             hold: holdFoe ? CHARS.indexOf(holdFoe) : -1,
+             holdX: holdFoe ? Math.round(holdFoe.x) : null,
+             ammo: ammo, gameOn: gameOn };
   };
   let score = 0, combo = 0, comboT = 0, ammo = 5;
   let freezeMs = 0;                     // hit-stop 剩余定格时间
