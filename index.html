@@ -1357,10 +1357,15 @@
   function possess(c){
     if (!c || c === player || !gameOn || c.box.style.display === 'none') return;
     const old = player;
-    // 旧玩家退位
+    // 旧玩家退位：恢复 NPC 速度/层级/原身高（取消纵深缩放）
     old.isPlayer = false;
     old.speed = old.npcSpeed || (34 + Math.random()*42);
     old.autoFoe = null; old.queuedFoe = null; old.duelFoe = null;
+    old.targetBt = null;
+    old.box.style.zIndex = depthZ(old.def);
+    const k0 = (innerWidth / innerHeight > 1) ? 1.15 : 1;
+    old.box.style.height = (old.def.vh * k0) + 'vh';
+    old.w = 0;
     if (old.state !== 'scoop'){                 // 正在舀水让它舀完（1450ms 回调按 isPlayer 分流）
       stopAct(old);
       old.state = 'idle';
@@ -1368,8 +1373,9 @@
     }
     // 新玩家就位
     c.isPlayer = true;
-    c.speed = 86 + Math.random()*18;
-    c.autoFoe = null; c.queuedFoe = null;
+    c.speed = 168 + Math.random()*32;           // 玩家速度≈NPC 的 3 倍：点哪到哪，掌控感核心
+    c.autoFoe = null; c.queuedFoe = null; c.targetBt = null;
+    c._lastBy = -99;                            // 强制 applyDepth 重算 z/身高
     if (c.state !== 'scoop'){                   // 附身一个正在舀水的 NPC：让它把水舀完，水进弹药
       stopAct(c);
       c.state = 'idle';
@@ -1431,6 +1437,7 @@
             player.basin = nb; player.duelFoe = null;
             nb._owner = player;               // 玩家优先：出发即占用
             player.state = 'toBasin';
+            player.targetBt = parseFloat(nb.style.bottom);
             player.targetX = clampX(br.left + br.width/2 + (player.x <= br.left + br.width/2 ? -1 : 1) * br.width * 0.12, player);
           }
         }, 230);
@@ -1444,6 +1451,7 @@
           player.queuedFoe = null; player.autoFoe = null;
           b._owner = player;                    // 出发即占用
           player.state = 'toBasin';
+          player.targetBt = parseFloat(b.style.bottom);  // 走到盆的脚线上再弯腰
           tapMark(x, y);
           player.targetX = clampX(bx + (player.x <= bx ? -1 : 1) * r.width * 0.12, player);
           return;
@@ -1451,7 +1459,8 @@
       }
       player.duelFoe = null;
       player.queuedFoe = null; player.autoFoe = null;
-      player.state = 'walk';             // 点地面 → 跑过去
+      player.state = 'walk';             // 点地面 → 跑过去（X + 纵深都听手指的）
+      player.targetBt = yToBt(y);        // 点哪儿走哪儿：纵深也归玩家管
       tapMark(x, y);
       player.targetX = nudgeOffBasin(clampX(x, player), player);
       return;
@@ -1578,6 +1587,7 @@
           player.duelFoe = null;
           player.queuedFoe = null;
           player.state = 'walk';
+          player.targetBt = null;           // 原地纵深不变，只横向接近
           player.autoFoe = t;
           player.targetX = nudgeOffBasin(clampX(t.x + (t.x >= player.x ? -1 : 1) * innerWidth * 0.30, player), player);
           pressChar = null;
@@ -1599,6 +1609,7 @@
           player.basin = nb;
           nb._owner = player;
           player.state = 'toBasin';
+          player.targetBt = parseFloat(nb.style.bottom);
           player.targetX = clampX(br.left + br.width/2 + (player.x <= br.left + br.width/2 ? -1 : 1) * br.width * 0.12, player);
         }
       }
@@ -1781,7 +1792,7 @@
       const o = b._owner;
       if (!c.isPlayer && o && o !== c && !o.isPlayer && (o.state === 'scoop' || (o.state === 'toBasin' && o.basin === b))) continue;
       const br = b.getBoundingClientRect();
-      const lineDiff = Math.abs(parseFloat(b.style.bottom) - (c.def.bt || 0));
+      const lineDiff = Math.abs(parseFloat(b.style.bottom) - curBt(c));
       const xDiff = Math.abs(basinX(b) - c.x) / innerWidth * 100;
       const s = lineDiff * 8 + xDiff;
       if (s < bs){ bs = s; best = b; }
@@ -1804,6 +1815,25 @@
 
   // 角色深度层级：直接取分配好的 z（盆与角色的遮挡全序，谁脚线靠前谁盖谁）
   function depthZ(def){ return def.z || 2; }
+
+  /* 当前脚线：NPC 恒等于 def.bt；玩家可纵深移动（by 动态变化） */
+  function curBt(c){ return (c.by != null ? c.by : (c.def.bt || 0)); }
+
+  /* 玩家纵深移动时写回 bottom / z / 轻微透视缩放（只有变化才写，避免每帧重排） */
+  function applyDepth(c){
+    const by = curBt(c);
+    if (Math.abs((c._lastBy || -99) - by) < 0.15) return;
+    c._lastBy = by;
+    c.box.style.bottom = by + '%';
+    if (c.isPlayer){
+      // 玩家动态 z：跨过盆脚线时切换遮挡关系（盆A z10 > 8 > 盆B z7 > 6 > 盆C z3）
+      c.box.style.zIndex = by < 12.9 ? 8 : 6;
+      const k = (innerWidth / innerHeight > 1) ? 1.15 : 1;
+      const sc = Math.max(0.82, Math.min(1.06, 1 + ((c.def.bt || 0) - by) * 0.014));
+      c.box.style.height = (c.def.vh * k * sc) + 'vh';
+      c.w = 0;
+    }
+  }
 
   function buildChar(def, i){
     const box = document.createElement('div');
@@ -1872,6 +1902,7 @@
     // 注意回调必须写对象属性 c.frames（局部变量会随 return 定格，异步后不再同步）
     const c = {box, img: body, body, head, act, headWrap, ladle, frame: box.querySelector('.p.frame'),
             frames: null, frameIdx: 0, frameT: 0, def, w:0,
+            by: def.bt, targetBt: null, _lastBy: -99,
             x:0, u:def.fx, dir: Math.random() < 0.5 ? -1 : 1,
             speed: 34 + Math.random()*42, state:'idle',
             until: performance.now() + 1400 + Math.random()*2800,
@@ -1907,9 +1938,14 @@
   let player = CHARS[0];                // 初始：boy
   CHARS[0].isPlayer = true;
   CHARS[0].npcSpeed = 34 + Math.random()*20;
-  CHARS[0].speed = 86 + Math.random()*18; // 玩家明显快于 NPC（34~76）：点哪走哪，不被人群"拖"住
+  CHARS[0].speed = 168 + Math.random()*32; // 玩家速度≈NPC 的 3 倍：点哪到哪，掌控感核心
   for (const c of CHARS){ if (!c.npcSpeed) c.npcSpeed = c.speed; }
   let gameOn = false, gameT = 0, gameTmr = 0;
+  window.__dbg = function(){            // 验证脚本探针（无副作用）
+    return { idx: CHARS.indexOf(player), by: Math.round(curBt(player)*10)/10,
+             z: player.box.style.zIndex, x: Math.round(player.x),
+             speed: Math.round(player.speed), state: player.state };
+  };
   let score = 0, combo = 0, comboT = 0, ammo = 5;
   let freezeMs = 0;                     // hit-stop 剩余定格时间
   const bEl = document.getElementById('battle');
@@ -1952,7 +1988,7 @@
     clearTimeout(pressTimer);
     pressChar = null;
     document.body.classList.remove('foe-hold');
-    player.queuedFoe = null; player.autoFoe = null;
+    player.queuedFoe = null; player.autoFoe = null; player.targetBt = null;
     stopAct(player);
     player.duelFoe = null;
     player.state = 'idle';
@@ -2023,6 +2059,7 @@
 
   /* 位置只写 transform（不改 left），避免每帧强制同步布局 */
   function moveChar(c){
+    applyDepth(c);                              // 纵深（bottom/z/缩放）只在变化时写
     if (!c.w) c.w = c.box.offsetWidth || 0;
     c.box.style.transform = 'translateX(' + (c.x - c.w*0.5) + 'px) scaleX(' + (c.dir < 0 ? -1 : 1) + ')';
   }
@@ -2091,7 +2128,11 @@
   function layoutChars(){
     // 横屏时背景是居中竖条，人物比例要贴近竖屏（1.66 会大得撑满画面）
     const k = (innerWidth / innerHeight > 1) ? 1.15 : 1;
-    for (const c of CHARS) c.box.style.height = (c.def.vh * k) + 'vh';
+    for (const c of CHARS){
+      c._lastBy = -99;
+      if (c.isPlayer) applyDepth(c);                    // 玩家：含纵深透视缩放
+      else c.box.style.height = (c.def.vh * k) + 'vh';
+    }
   }
   function clampX(px, c){
     const half = (c.w || c.box.offsetWidth) * 0.5 + 8;
@@ -2099,6 +2140,9 @@
     if (hi <= lo) return stageLeft() + stageW() / 2;   // 极窄：钉在舞台中央
     return Math.max(lo, Math.min(hi, px));
   }
+  /* 屏幕点击 y → 目标脚线（bottom%）。y 越小越往纵深走。
+     玩家纵深范围 4.2~17.5：能串到中景排，但不越过最远排（大个子走太远透视会穿帮）。 */
+  function yToBt(y){ return Math.max(4.2, Math.min(17.5, (innerHeight - y) / innerHeight * 100)); }
   function centerOf(el, ry){
     const r = el.getBoundingClientRect();
     return { x: r.left + r.width/2, y: r.top + r.height*(ry || 0.30) };
@@ -2123,7 +2167,7 @@
       let score = 1e9;
       for (const o of CHARS){
         if (o === c || o.box.style.display === 'none') continue;
-        if (Math.abs((o.def.bt || 0) - (c.def.bt || 0)) > 6) continue;
+        if (Math.abs(curBt(o) - curBt(c)) > 6) continue;
         score = Math.min(score, Math.abs(cand - o.x));
       }
       if (score > bestScore){ bestScore = score; best = cand; }
@@ -2149,7 +2193,7 @@
         if (b.box.style.display === 'none') continue;
         if (b.state === 'scoop') continue;
         if ((a.duelLock && a.duelFoe === b) || (b.duelLock && b.duelFoe === a)) continue;
-        if (Math.abs((a.def.bt || 0) - (b.def.bt || 0)) > 9) continue;
+        if (Math.abs(curBt(a) - curBt(b)) > 9) continue;
         const aw = a.w || a.box.offsetWidth || 60, bw = b.w || b.box.offsetWidth || 60;
         const minGap = (aw + bw) * 0.38;
         const dx = b.x - a.x, dist = Math.abs(dx);
@@ -2186,12 +2230,26 @@
       if (c.state === 'walk' || c.state === 'toBasin'){
         const d = c.targetX - c.x;
         const step = c.speed * dt;
-        if (Math.abs(d) <= step){
+        /* 纵深移动（Y 轴）：玩家点哪里就真的走到哪里 —— 同时逼近横向目标与脚线目标。
+           纵深速度打六折（透视上前后移动显得更慢是自然的）。 */
+        let yArrived = true;
+        if (c.isPlayer && c.targetBt != null){
+          const dbt = c.targetBt - curBt(c);
+          const stepY = c.speed * 0.6 * dt;
+          if (Math.abs(dbt) <= stepY){ c.by = c.targetBt; }
+          else { c.by += Math.sign(dbt) * stepY; yArrived = false; }
+          applyDepth(c);
+          yArrived = yArrived && Math.abs(c.targetBt - curBt(c)) < 0.2;
+        }
+        if (Math.abs(d) <= step && yArrived){
           c.x = c.targetX;
+          if (c.isPlayer && c.targetBt != null) c.by = c.targetBt;
           arriveChar(c);
         } else {
-          c.dir = d > 0 ? 1 : -1;
-          c.x += c.dir * step;
+          if (Math.abs(d) > step){
+            c.dir = d > 0 ? 1 : -1;
+            c.x += c.dir * step;
+          }
           if (c.frames){
             // 序列帧走路：两帧交替（迈步A / 镜像迈步B），左右脚真的在换
             c.frameT -= dtms;
@@ -2239,9 +2297,9 @@
   function arriveChar(c){
     stopAct(c);
     if (c.state === 'toBasin'){
-      // 先校验盆：脚线不匹配（比如点了远景盆但前景够不到）就继续走向脚线匹配的盆
+      // NPC：校验盆脚线，不匹配就换；玩家（可纵深移动）信任自己点的盆，直接走过去
       const nb = bestBasinFor(c);
-      if (nb && nb !== c.basin && c.basin && Math.abs(basinX(nb) - c.x) > 24){
+      if (!c.isPlayer && nb && nb !== c.basin && c.basin && Math.abs(basinX(nb) - c.x) > 24){
         if (c.basin._owner === c) c.basin._owner = null;   // 释放旧盆
         c.basin = nb;
         nb._owner = c;                                     // 出发即占用新盆（否则永远显示"空闲"→ 无限换盆）
@@ -2270,6 +2328,11 @@
       const off = bw * 0.10 * (Math.random() < 0.5 ? -1 : 1);
       c.x = clampX(bx + off, c);
       c.u = uOf(c.x);
+      if (c.isPlayer){
+        // 玩家纵深受控：弯腰时把脚线精确落到盆沿上（盆沿挡脚 = 站在盆后舀水）
+        c.by = parseFloat(c.basin.style.bottom);
+        c.targetBt = null;
+      }
       c.dir = bx >= c.x ? 1 : -1;
       // 层级不需要动：全序深度下，脚线与盆匹配的角色本来就在对应盆之后（盆沿挡脚=站在盆后），
       // 被调度到"更远"盆时则天然站在盆前方，人画在盆上 —— 两种情况透视都正确。
@@ -2297,6 +2360,7 @@
           if (qf && qf.box.style.display !== 'none' && holdFoe !== qf){
             // 按住目标时没水 → 来舀水；水到手时人已松手 → 自动走过去泼
             c.state = 'walk';
+            c.targetBt = null;
             c.autoFoe = qf;
             c.targetX = nudgeOffBasin(clampX(qf.x + (qf.x >= c.x ? -1 : 1) * innerWidth * 0.30, c), c);
           } else {
