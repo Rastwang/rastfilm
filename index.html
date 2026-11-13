@@ -1411,6 +1411,25 @@
   function spotScoop(c){
     stopAct(c);
     c.state = 'scoop';
+    /* 临时水盆：当场舀水也要有盆——脚边（面朝一侧）淡入一个小陶盆，舀完淡出 */
+    if (c._ghostBasin) c._ghostBasin.remove();      // 连续点按：先收走上一只
+    const gr = c.box.getBoundingClientRect();
+    const gb = document.createElement('div');
+    gb.className = 'basin';
+    gb.innerHTML = svgBasin;
+    gb.style.left = (c.x + (c.dir || 1) * gr.width * 0.52) + 'px';
+    gb.style.bottom = (curBt(c)) + '%';             // 与脚线齐平：弯腰正对盆
+    gb.style.width = Math.max(52, Math.min(140, gr.width * 0.62)) + 'px';
+    gb.style.zIndex = Math.min(12, (parseInt(c.box.style.zIndex, 10) || 4) + 1);  // 盆在身前：前沿盖住前脚
+    gb.style.opacity = '0';
+    gb.style.transition = 'opacity .16s ease-out';
+    document.body.appendChild(gb);
+    requestAnimationFrame(() => { gb.style.opacity = '1'; });
+    c._ghostBasin = gb;
+    setTimeout(() => {                              // 起身端水：盆淡出并移除
+      if (gb.isConnected){ gb.style.opacity = '0'; setTimeout(() => gb.remove(), 320); }
+      if (c._ghostBasin === gb) c._ghostBasin = null;
+    }, 1650);
     if (c.frames){
       showFrame(c, 2, 'scoop');               // 真弯腰：持瓢下探
       c.actName = 'scoop';
