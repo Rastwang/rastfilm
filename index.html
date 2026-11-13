@@ -1358,8 +1358,8 @@
 
   /* 按住手势状态：按住玩偶 = 附身 + 自动瞄准最近对手（松手即泼） */
   let holdFoe = null;
-  /* 点/按玩偶的二合一手势状态：
-     快速点一下(<230ms) = 附身控制它；按住不放(≥230ms) = 附身它 + 舀水洒水一整套 */
+  /* 点/按玩偶的手势状态：
+     手指碰到玩偶的瞬间 = 立即附身（零延迟）；按住不放(≥230ms) = 舀水洒水一整套 */
   let pressChar = null, pressTimer = 0;
 
   /* ================= 附身切换：点一下任意玩偶 = 控制它 =================
@@ -1395,6 +1395,9 @@
       moveChar(c);
     }
     player = c;
+    /* 附身定格：指尖落下的瞬间全场其他玩偶停一拍 —— 屏幕上只有它在动，
+       动作才能被归因于手指（否则和 NPC 随机舀水泼水混在一起，毫无掌控感） */
+    npcFreeze = 1400;
     // 反馈：脚下金色水花绽开 + 一声欢呼
     const r = c.box.getBoundingClientRect();
     spawnSplash(r.left + r.width/2, r.bottom - r.height*0.15, 0, -1, 1.0);
@@ -1428,17 +1431,15 @@
       }
       const t = hitTest(x, y);
       if (t && t !== player){
-        /* 点玩偶二合一手势：
-           - 快速点一下（<230ms松手）= 附身控制它：YOU 徽标跳过去，没水时它立刻去舀水
-           - 按住不放（≥230ms）= 附身它 + 弯腰舀水 + 洒水一整套（瞄准环自动套住最近对手） */
+        /* 手指碰到玩偶的瞬间就附身——零延迟，"点住谁，谁就是你的"（掌控感第一拍） */
+        possess(t);
         pressChar = t;
         clearTimeout(pressTimer);
         pressTimer = setTimeout(() => {
-          if (pressChar !== t) return;      // 已在230ms内松手 → 是"点一下"，走附身
+          if (pressChar !== t) return;      // 已松手 → 只是点一下，附身已完成
           pressChar = null;
-          /* 按住玩偶 = 附身它：手指按住谁，弯腰舀水、洒水的就是谁（掌控感核心） */
-          if (t !== player) possess(t);
-          /* 自动瞄准：离玩家最近的对手；按住期间手指移到谁身上，环就套住谁 */
+          /* 按住不放 ≥230ms：舀水洒水一整套。目标=离玩家最近的对手；
+             按住期间手指移到谁身上，环就套住谁 */
           const aim = nearestRival(player);
           holdFoe = aim;
           if (ammo > 0){
@@ -1451,7 +1452,11 @@
               stopAct(player);
               player.state = 'idle';
               player.until = performance.now() + 100000000;
-              if (aim){ player.dir = aim.x >= player.x ? 1 : -1; moveChar(player); }
+              if (aim){
+                player.dir = aim.x >= player.x ? 1 : -1;
+                moveChar(player);
+                play(player, 'lunge', 520);   // 举瓢备战：松手就泼，有即时反馈
+              }
             }
             return;
           }
@@ -1973,8 +1978,10 @@
              holdX: holdFoe ? Math.round(holdFoe.x) : null,
              ammo: ammo, gameOn: gameOn };
   };
+  window.__dbg.freeze = function(ms){ npcFreeze = ms; };   // 测试钩子：定格/解冻（测附身与冻结用）
   let score = 0, combo = 0, comboT = 0, ammo = 5;
   let freezeMs = 0;                     // hit-stop 剩余定格时间
+  let npcFreeze = 0;                    // 附身定格：附身瞬间其他玩偶暂停走动/舀水（呼吸摇摆不受影响）
   const bEl = document.getElementById('battle');
   const bT = document.getElementById('bT');
   const bS = document.getElementById('bS');
@@ -2250,8 +2257,12 @@
 
   function updateChars(dtms){
     const dt = Math.min(64, dtms)/1000;
+    /* 附身定格期间：只有玩家的玩偶在动，其余玩偶原地冻结（走路/舀水/对泼全停） */
+    const frozen = npcFreeze > 0;
+    if (frozen) npcFreeze -= dtms;
     for (const c of CHARS){
       if (c.box.style.display === 'none') continue;
+      if (frozen && !c.isPlayer) continue;
       // 舀水流程结束（自然完成或被打断/改变主意）后，释放盆占用
       if (c.state !== 'scoop' && c.state !== 'toBasin' && c.basin && c.basin._owner === c) c.basin._owner = null;
       if (c.state === 'walk' || c.state === 'toBasin'){
@@ -2318,7 +2329,7 @@
         }
       }
     }
-    separateChars(dtms);
+    if (!frozen) separateChars(dtms);
   }
 
   function arriveChar(c){
@@ -2562,6 +2573,7 @@
 
   setInterval(() => {
     if (!started) return;
+    if (npcFreeze > 0) return;                // 附身定格：全世界停一拍，不派新活
     const now = performance.now();
     for (const c of CHARS){
       if (c.box.style.display === 'none') continue;
