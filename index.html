@@ -719,7 +719,7 @@
   <button type="button" data-l="en">EN</button><button type="button" data-l="fa">فارسی</button>
 </div>
 
-<div class="hint" id="hint"><b>Tap a doll to control it · Hold it to scoop & splash</b> — 3-min water battle</div>
+<div class="hint" id="hint"><b>Tap a doll: it bends, scoops & splashes on the spot</b> — 3-min water battle</div>
 
 <div id="gate">
   <div class="big">آب‌پاشی</div>
@@ -838,7 +838,7 @@
   const I18N = {
     en: {
       dir: 'ltr',
-      hint: '<b>Tap a doll to control it · Hold it to scoop & splash</b> — 3-min water battle',
+      hint: '<b>Tap a doll: it bends, scoops & splashes on the spot</b> — 3-min water battle',
       sub: 'Tap to begin · 3-MIN WATER BATTLE',
       time: 'TIME', score: 'SCORE',
       title: 'TIRGAN BATTLE',
@@ -858,7 +858,7 @@
     },
     fa: {
       dir: 'rtl',
-      hint: '<b>برای کنترل عروسک، روی آن بزن · عروسک را نگه دار تا آب بگیرد و بپاشد</b> — نبرد آبی ۳ دقیقه‌ای',
+      hint: '<b>روی عروسک بزن: همان‌جا خم می‌شود، آب می‌گیرد و می‌پاشد</b> — نبرد آبی ۳ دقیقه‌ای',
       sub: 'برای شروع لمس کن · نبرد آبی ۳ دقیقه‌ای',
       time: 'زمان', score: 'امتیاز',
       title: 'نبرد تیرگان',
@@ -1358,9 +1358,8 @@
 
   /* 按住手势状态：按住玩偶 = 附身 + 自动瞄准最近对手（松手即泼） */
   let holdFoe = null;
-  /* 点/按玩偶的手势状态：
-     手指碰到玩偶的瞬间 = 立即附身（零延迟）；按住不放(≥230ms) = 舀水洒水一整套 */
-  let pressChar = null, pressTimer = 0;
+  /* 点/按玩偶的手势状态：碰到玩偶的瞬间 = 立即附身 + 整套舀水洒水（零延迟） */
+  let pressChar = null;
 
   /* ================= 附身切换：点一下任意玩偶 = 控制它 =================
      YOU 徽标/光环每帧跟随 player 变量，切换瞬间跳到新玩偶头上；
@@ -1458,33 +1457,27 @@
     px = x; py = y; pt = performance.now();
 
     /* ---- 水仗模式：玩家的指令（优先于手指划水） ----
-       手势分工：点玩偶 = 立刻附身（玩偶优先——盆边站着人也不劫持，
-                 附身自带即时反馈且按住有整套动作，不会"站着没反应"）
-                 按住玩偶 = 弯腰舀水 + 洒水一整套   点盆/点地面 = 走位补水 */
+       手势分工：点玩偶 = 立刻附身 + 当场弯腰舀水洒水一整套（玩偶优先——
+                 盆边站着人也不劫持）   点盆 = 走位补水   点地面 = 走位 */
     if (gameOn && player.box.style.display !== 'none'){
       const t = hitTest(x, y);
       if (t && t !== player){
-        /* 手指碰到玩偶的瞬间就附身——零延迟，"点住谁，谁就是你的"（掌控感第一拍） */
+        /* 手指碰到玩偶的瞬间 = 附身 + 立刻整套动作：
+           弯腰舀水 → 起身 → 自动洒向最近对手（不再要求按住时长——点到就演）。
+           按住不放时瞄准环跟随手指，滑到谁身上就泼谁 */
         possess(t);
         pressChar = t;
-        clearTimeout(pressTimer);
-        pressTimer = setTimeout(() => {
-          if (pressChar !== t) return;      // 已松手 → 只是点一下，附身已完成
-          pressChar = null;
-          /* 按住玩偶 ≥230ms = 当场弯腰舀水 → 起身 → 自动洒向最近对手（完整一整套）。
-             目标=离玩家最近的对手；按住期间手指移到谁身上，环就套住谁、就泼谁 */
-          const aim = nearestRival(player);
-          holdFoe = aim;
-          player.queuedFoe = aim;
-          player.autoFoe = null;
-          // 正在弯腰舀水：不打断，舀完自动泼向目标；正奔赴盆（明确点过盆）：继续，舀完自动泼
-          if (player.state === 'scoop' || player.state === 'toBasin') return;
+        const aim = nearestRival(player);
+        holdFoe = aim;
+        player.queuedFoe = aim;
+        player.autoFoe = null;
+        if (player.state !== 'scoop'){        // 正在舀水：不打断，目标已更新，舀完自动泼
           if (aim){
             player.dir = aim.x >= player.x ? 1 : -1;
             moveChar(player);
           }
-          spotScoop(player);                // 原地弯腰舀水——动作立刻发生
-        }, 230);
+          spotScoop(player);                  // 原地弯腰舀水——动作立刻发生
+        }
         return;
       }
       for (const b of BASINS){
@@ -1622,7 +1615,6 @@
 
   function onUp(){
     drawing = false;
-    clearTimeout(pressTimer);
     /* 按住-松手手势：松手的一刻把瓢里的水泼向锁定的目标 */
     if (holdFoe){
       const t = holdFoe;
@@ -1655,23 +1647,8 @@
         /* 没水：onDown 已安排去舀水（queuedFoe 接管），舀完自动走过去泼 */
       }
     } else if (pressChar && gameOn){
-      /* 快速点一下玩偶 = 附身：控制权交给它（YOU 徽标跳过去） */
-      const c = pressChar;
-      pressChar = null;
+      /* 快速点一下：附身与舀水洒水整套已在 onDown 碰到瞬间启动，这里只补个涟漪反馈 */
       tapMark(px, py);
-      possess(c);
-      // 没水时新玩家立刻去舀水 —— "点它，它就动"
-      if (ammo <= 0){
-        const nb = bestBasinFor(player);
-        if (nb){
-          const br = nb.getBoundingClientRect();
-          player.basin = nb;
-          nb._owner = player;
-          player.state = 'toBasin';
-          player.targetBt = parseFloat(nb.style.bottom);
-          player.targetX = clampX(br.left + br.width/2 + (player.x <= br.left + br.width/2 ? -1 : 1) * br.width * 0.12, player);
-        }
-      }
     }
     pressChar = null;
   }
@@ -2049,7 +2026,6 @@
     clearInterval(gameTmr);
     bEl.classList.remove('on');
     holdFoe = null;
-    clearTimeout(pressTimer);
     pressChar = null;
     document.body.classList.remove('foe-hold');
     player.queuedFoe = null; player.autoFoe = null; player.targetBt = null;
