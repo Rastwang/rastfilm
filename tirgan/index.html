@@ -490,6 +490,8 @@
   body.lang-fa #big,
   body.lang-fa .b-time i,
   body.lang-fa .b-score i,
+  body.lang-fa .b-hit i,
+  body.lang-fa .r-hits,
   body.lang-fa .r-title{letter-spacing:0 !important;text-transform:none !important}
 
   .hint{
@@ -570,6 +572,36 @@
     border-radius:10px;padding:6px 12px;color:#fff;font-weight:700;font-size:17px;
   }
   .b-score i{font-style:normal;font-size:10px;opacity:.7;display:block;letter-spacing:1px}
+
+  /* 泼中计数：玩家每泼中一个人 +1，数字弹一下、冒一个 +1（成就感）
+     放在 TIME 卡正下方——顶部中间是 Patreon 按钮，不能挡 */
+  .b-left{display:flex;flex-direction:column;gap:9px;align-items:stretch}
+  .b-hit{
+    position:relative;text-align:center;min-width:64px;
+    background:rgba(20,10,4,.55);border:1px solid rgba(255,214,140,.35);
+    border-radius:10px;padding:6px 10px;
+    color:#ffe08a;font-weight:800;font-size:17px;line-height:1.1;
+    transition:border-color .3s,box-shadow .3s;
+  }
+  .b-hit>span{font-variant-numeric:tabular-nums}
+  .b-hit i{font-style:normal;font-size:9px;opacity:.72;display:block;letter-spacing:.5px;white-space:nowrap}
+  .b-hit.bump{
+    border-color:rgba(255,228,165,.95);
+    box-shadow:0 0 18px rgba(255,200,90,.55),inset 0 0 12px rgba(255,200,90,.18);
+    animation:hitBump .5s cubic-bezier(.2,1.5,.4,1);
+  }
+  @keyframes hitBump{0%{transform:scale(1)}28%{transform:scale(1.13)}100%{transform:scale(1)}}
+  .b-hit .plus{
+    position:absolute;left:50%;top:-3px;margin-left:-10px;
+    font-size:12px;font-weight:900;color:#ffe9a8;pointer-events:none;
+    text-shadow:0 1px 6px rgba(0,0,0,.75);
+    animation:plusUp .95s ease-out forwards;
+  }
+  @keyframes plusUp{
+    0%  {opacity:0;transform:translateY(5px) scale(.7)}
+    22% {opacity:1;transform:translateY(0) scale(1.16)}
+    100%{opacity:0;transform:translateY(-11px) scale(1)}
+  }
   .b-ammo{display:flex;gap:4px;margin-top:6px;justify-content:center}
   .b-ammo s{
     width:11px;height:15px;text-decoration:none;border-radius:50% 50% 55% 55%;
@@ -614,6 +646,10 @@
   .r-title{font-size:13px;letter-spacing:3px;color:#ffd98f;opacity:.85}
   .r-score{font-size:46px;font-weight:900;color:#fff;margin:6px 0 2px}
   .r-rank{font-size:15px;color:#ffe9a8;margin-bottom:6px}
+  .r-hits{
+    font-size:13px;font-weight:600;color:#ffd98f;opacity:.92;
+    margin-bottom:8px;letter-spacing:.3px;
+  }
   .r-breath{font-size:12px;font-style:italic;color:#e8c98f;opacity:.8;margin-bottom:18px}
   .r-btns{display:flex;flex-direction:column;gap:10px}
   .r-btn{
@@ -750,7 +786,10 @@
 </div>
 
 <div id="battle">
-  <div class="b-time"><span id="bT">3:00</span><i id="lTime">TIME</i></div>
+  <div class="b-left">
+    <div class="b-time"><span id="bT">3:00</span><i id="lTime">TIME</i></div>
+    <div class="b-hit" id="bHit"><span id="bH">0</span><i id="lHit">PEOPLE SOAKED</i></div>
+  </div>
   <div style="flex:1"></div>
   <div class="b-score"><span id="bS">0</span><i id="lScore">SCORE</i>
     <div class="b-ammo" id="bA"><s class="full"></s><s class="full"></s><s class="full"></s><s class="full"></s><s class="full"></s></div>
@@ -762,6 +801,7 @@
     <div class="r-title" id="rTitle">TIRGAN BATTLE</div>
     <div class="r-score" id="rScore">0</div>
     <div class="r-rank" id="rRank">—</div>
+    <div class="r-hits" id="rHits">You splashed 0 people</div>
     <div class="r-breath" id="rBreath">Take a breath. Splash again.</div>
     <div class="r-btns">
       <button class="r-btn r-again" id="rAgain">PLAY AGAIN</button>
@@ -778,6 +818,9 @@
   const CONFIG = {
     PATREON_URL: 'https://www.patreon.com/c/rastfilm'
   };
+
+  /* 泼中计数：本局玩家泼中了多少人（声明放前面——applyLang 启动时就会来读它） */
+  let soaked = 0;
 
   /* ================= 画布 ================= */
   const cv  = document.getElementById('fx');
@@ -859,6 +902,8 @@
       hint: '<b>Tap a doll: it bends, scoops & splashes on the spot</b> — 3-min water battle',
       sub: 'Tap to begin · 3-MIN WATER BATTLE',
       time: 'TIME', score: 'SCORE',
+      hitLabel: 'PEOPLE SOAKED',
+      hitLine: n => 'You splashed ' + n + (n === 1 ? ' person' : ' people'),
       title: 'TIRGAN BATTLE',
       breath: 'Take a breath. Splash again.',
       verse: ['The highest good is like water.', 'Happy Tirgan, every day.'],
@@ -880,6 +925,8 @@
       hint: '<b>روی عروسک بزن: همان‌جا خم می‌شود، آب می‌گیرد و می‌پاشد</b> — نبرد آبی ۳ دقیقه‌ای',
       sub: 'برای شروع لمس کن · نبرد آبی ۳ دقیقه‌ای',
       time: 'زمان', score: 'امتیاز',
+      hitLabel: 'نفر را خیس کردی',
+      hitLine: n => n + ' نفر را خیس کردی',
       title: 'نبرد تیرگان',
       breath: 'یک نفس بکش. دوباره بپاش.',
       verse: ['برترین نیکی همچون آب است', 'تیرگان مبارک، هر روز'],
@@ -965,6 +1012,9 @@
     }
     set('lTime', d.time);
     set('lScore', d.score);
+    set('lHit', d.hitLabel, true);
+    const rh = document.getElementById('rHits');
+    if (rh && d.hitLine) rh.textContent = d.hitLine(soaked);
     set('rTitle', d.title, true);
     set('rBreath', d.breath, true);
     set('rAgain', d.again, true);
@@ -2082,13 +2132,29 @@
   const bEl = document.getElementById('battle');
   const bT = document.getElementById('bT');
   const bS = document.getElementById('bS');
+  const bH = document.getElementById('bH');
+  const bHit = document.getElementById('bHit');
   const bA = document.getElementById('bA');
   const bigEl = document.getElementById('big');
   function drawAmmo(){
     for (let i = 0; i < bA.children.length; i++)
       bA.children[i].className = i < ammo ? 'full' : '';
   }
-  function updateHud(){ bS.textContent = score; drawAmmo(); }
+  function updateHud(){ bS.textContent = score; bH.textContent = soaked; drawAmmo(); }
+  /* 泼中 +1：数字弹一下、冒一个 +1，让"又中一个"看得见 */
+  function countHit(){
+    soaked++;
+    bH.textContent = soaked;
+    bHit.classList.remove('bump');
+    void bHit.offsetWidth;
+    bHit.classList.add('bump');
+    const plus = document.createElement('span');
+    plus.className = 'plus';
+    plus.textContent = '+1';
+    bHit.appendChild(plus);
+    setTimeout(() => { plus.remove(); }, 1000);
+    setTimeout(() => { bHit.classList.remove('bump'); }, 700);
+  }
   function bigText(t){
     bigEl.textContent = t;
     bigEl.classList.remove('pop'); void bigEl.offsetWidth; bigEl.classList.add('pop');
@@ -2101,7 +2167,7 @@
   const GAME_LEN = 180;                 // 3 分钟一局
   function fmtT(s){ return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
   function startGame(){
-    gameOn = true; gameT = GAME_LEN; score = 0; combo = 0; comboT = 0; ammo = 5;
+    gameOn = true; gameT = GAME_LEN; score = 0; combo = 0; comboT = 0; ammo = 5; soaked = 0;
     updateHud(); bT.textContent = fmtT(gameT);
     bEl.classList.add('on');
     clearInterval(gameTmr);
@@ -2131,6 +2197,7 @@
       score >= 500  ? rk[1] :
                       rk[0];
     document.getElementById('rRank').textContent = rank;
+    document.getElementById('rHits').textContent = T().hitLine(soaked);
     document.getElementById('result').classList.add('on');
     say('end');
   }
@@ -2592,11 +2659,12 @@
   function soak(t, from){
     t.wet = Math.min(4, (t.wet || 0) + 1);
 
-    /* ---- 水仗计分：玩家泼中 = 连击加分 + hit-stop + 震屏 ---- */
+    /* ---- 水仗计分：玩家泼中 = 连击加分 + 人头 +1 + hit-stop + 震屏 ---- */
     if (gameOn && from === player && t !== player){
       combo = comboT > 0 ? Math.min(5, combo + 1) : 1;
       comboT = 5000;
       score += 100 * combo;
+      countHit();                                   // 泼中一个人头，计数 +1（屏幕上的"你泼中了 N 个人"）
       bigText(T().bigSoaked(combo));
       // 喊话：连击越高喊得越嗨（跟随当前语言模式）
       if (combo >= 5)       say('c5');
